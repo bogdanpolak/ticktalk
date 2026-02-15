@@ -29,16 +29,17 @@ export interface SessionSummary {
   createdAt: number;
 }
 
+interface CreateSessionInput {
+  hostId: string;
+  hostName: string;
+  slotDurationSeconds: number;
+}
+
 /**
  * Create a new session
  * Returns the generated session ID
  */
-export async function createSession(
-  hostId: string,
-  hostName: string,
-  createdAt: number,
-  slotDurationSeconds: number
-): Promise<string> {
+export async function createSession(input: CreateSessionInput): Promise<string> {
   const sessionRef = push(ref(db, 'sessions'));
   const sessionId = sessionRef.key;
   
@@ -47,16 +48,16 @@ export async function createSession(
   }
 
   const newSession: Session = {
-    hostId,
-    createdAt,
-    slotDurationSeconds,
+    hostId: input.hostId,
+    createdAt: Date.now(),
+    slotDurationSeconds: input.slotDurationSeconds,
     status: 'lobby',
     activeSpeakerId: null,
     slotEndsAt: null,
     spokenUserIds: [],
     participants: {
-      [hostId]: {
-        name: hostName,
+      [input.hostId]: {
+        name: input.hostName,
         role: 'host',
         isHandRaised: false
       }

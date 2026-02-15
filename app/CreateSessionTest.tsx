@@ -34,7 +34,11 @@ export default function CreateSessionTest() {
     setIsLoading(true);
     const createdAt: number = Date.now();
 
-    createSession("bogdan_polak", "Bogdan Polak", createdAt, 60)
+    createSession({
+      hostId: "bogdan_polak",
+      hostName: "Bogdan Polak",
+      slotDurationSeconds: 60
+    })
       .then((sessionId) => {
         const existingSessions = [...sessions.map((s) => ({ ...s, ago: calculateAgo(s.createdAt) }))];
         const newSession: SessionView = {

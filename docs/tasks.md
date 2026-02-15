@@ -8,7 +8,7 @@
 | REQ-0002 | Firebase lib initialization (`lib/firebase.ts`, `lib/auth.ts`) | ✅ |
 | REQ-0003 | Session data operations (`lib/session.ts`) | ✅ |
 | REQ-0004 | `useSession` and `useAuth` hooks | 🟨 |
-| REQ-0005 | Home page — create session flow | 🟨 |
+| REQ-0005 | Home page — create session flow | ✅ |
 | REQ-0006 | Join page — enter name and join | 🟨 |
 | REQ-0007 | Basic meeting page with lobby view | ⬜ |
 | REQ-0008 | Active speaker display component | ⬜ |
