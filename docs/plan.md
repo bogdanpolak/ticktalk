@@ -296,57 +296,15 @@ hooks/
 
 ---
 
-## 9. Implementation Phases
+## 9. Implementation Tasks
 
-### Phase 1 — Foundation (Week 1)
+See [docs/tasks.md](tasks.md) for the complete task list with tracking and status updates.
 
-| # | Task                                         | Est.  |
-|---|----------------------------------------------|-------|
-| 1 | Firebase project setup + env configuration   | 2h    |
-| 2 | Firebase lib initialization (`lib/firebase.ts`, `lib/auth.ts`) | 2h |
-| 3 | Session data operations (`lib/session.ts`)   | 3h    |
-| 4 | `useSession` and `useAuth` hooks             | 3h    |
-| 5 | Home page — create session flow              | 3h    |
-| 6 | Join page — enter name and join              | 2h    |
-| 7 | Basic meeting page with lobby view           | 3h    |
-
-**Deliverable:** Host can create session, participants can join, all see lobby.
+All 21 tasks must be completed to achieve a production-ready MVP.
 
 ---
 
-### Phase 2 — Meeting Flow (Week 2)
-
-| # | Task                                         | Est.  |
-|---|----------------------------------------------|-------|
-| 1 | Active speaker display component             | 2h    |
-| 2 | Timer component with color states            | 3h    |
-| 3 | `useTimer` hook (local countdown)            | 2h    |
-| 4 | Speaker selection with transaction logic     | 3h    |
-| 5 | End slot + select next speaker flow          | 3h    |
-| 6 | Participant list with status indicators      | 2h    |
-| 7 | Host "Start Meeting" + "End Meeting" controls| 2h    |
-
-**Deliverable:** Complete meeting flow — start, speak, timer, select next, end.
-
----
-
-### Phase 3 — Polish & Edge Cases (Week 3)
-
-| # | Task                                         | Est.  |
-|---|----------------------------------------------|-------|
-| 1 | Hand raise toggle + visual indicator         | 2h    |
-| 2 | "Spoken" tracking and round reset logic      | 2h    |
-| 3 | Disconnect handling (speaker & host)         | 3h    |
-| 4 | Timer expired indicator + sound notification | 2h    |
-| 5 | Mobile-responsive layout adjustments         | 3h    |
-| 6 | Firebase security rules (basic)              | 1h    |
-| 7 | End-to-end testing & bug fixes               | 4h    |
-
-**Deliverable:** Production-ready MVP with edge case handling.
-
----
-
-## 10. Deployment
+## 11. Deployment
 
 1. Create Firebase project → enable Realtime Database + Anonymous Auth
 2. Add Firebase credentials as Vercel environment variables
@@ -356,7 +314,7 @@ hooks/
 
 ---
 
-## 11. Future Enhancements (Post-MVP)
+## 12. Future Enhancements (Post-MVP)
 
 | Priority | Feature                                  |
 | -------- | ---------------------------------------- |
@@ -370,11 +328,13 @@ hooks/
 
 ---
 
-## 12. Success Criteria
+## 10. Success Criteria
 
-After 1 month of internal usage:
+At MVP completion (all 21 tasks marked ✅):
 
-- Meetings end on time ≥ 80%
-- All participants speak in ≥ 90% of sessions
-- Positive team feedback on meeting structure
-- Reduced standup duration variance
+- All core features functional (create, join, speak, timer, end meeting)
+- Firebase real-time sync working across participants
+- Mobile-responsive UI with no critical layout issues
+- Edge cases handled (disconnects, concurrent actions)
+- Sound notification on timer expiry
+- Code ready for internal team testing
