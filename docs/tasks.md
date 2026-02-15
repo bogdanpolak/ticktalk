@@ -10,11 +10,11 @@
 | REQ-0004 | `useSession` and `useAuth` hooks | ✅ |
 | REQ-0005 | Home page — create session flow | ✅ |
 | REQ-0006 | Join page — enter name and join | 🟨 |
-| REQ-0007 | Basic meeting page with lobby view | ⬜ |
-| REQ-0008 | Active speaker display component | ⬜ |
-| REQ-0009 | Timer component with color states | ⬜ |
-| REQ-0010 | `useTimer` hook (local countdown) | ⬜ |
-| REQ-0011 | Speaker selection with transaction logic | ⬜ |
+| REQ-0007 | Basic meeting page with lobby view | 🟨 |
+| REQ-0008 | Active speaker display component | 🟨 |
+| REQ-0009 | Timer component with color states | 🟨 |
+| REQ-0010 | `useTimer` hook (local countdown) | 🟨 |
+| REQ-0011 | Speaker selection with transaction logic | 🟨 |
 | REQ-0012 | End slot + select next speaker flow | ⬜ |
 | REQ-0013 | Participant list with status indicators | ⬜ |
 | REQ-0014 | Host "Start Meeting" + "End Meeting" controls | ⬜ |
