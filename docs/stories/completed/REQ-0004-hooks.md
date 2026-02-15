@@ -1,6 +1,6 @@
 # REQ-0004: `useSession` and `useAuth` Hooks
 
-**Status**: ⬜ Not Started  
+**Status**: ✅ Completed  
 **Priority**: High (Foundation)  
 **Dependencies**: REQ-0001, REQ-0002, REQ-0003
 

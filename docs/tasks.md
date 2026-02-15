@@ -7,7 +7,7 @@
 | REQ-0001 | Firebase project setup + env configuration | ✅ |
 | REQ-0002 | Firebase lib initialization (`lib/firebase.ts`, `lib/auth.ts`) | ✅ |
 | REQ-0003 | Session data operations (`lib/session.ts`) | ✅ |
-| REQ-0004 | `useSession` and `useAuth` hooks | 🟨 |
+| REQ-0004 | `useSession` and `useAuth` hooks | ✅ |
 | REQ-0005 | Home page — create session flow | ✅ |
 | REQ-0006 | Join page — enter name and join | 🟨 |
 | REQ-0007 | Basic meeting page with lobby view | ⬜ |
@@ -30,24 +30,9 @@
 
 ## Status Symbols
 
-- **⬜ Not Started** — Ready to begin
-- **🟨 In Progress** — Implementation story file is created and the agent is working or will start soon
-- **✅ Completed** — Task finished and verified
-
----
-
-## Task Dependencies
-
-### Foundation Tasks (can run in parallel after setup)
-- REQ-0001 (must complete first)
-- REQ-0002 (must complete after REQ-0001)
-- REQ-0003, REQ-0004, REQ-0005, REQ-0006, REQ-0007 (can run parallel)
-
-### Meeting Flow Tasks (requires foundation)
-- REQ-0008 through REQ-0014 (can run mostly parallel)
-
-### Polish & Edge Cases (can run in parallel)
-- REQ-0015 through REQ-0021
+- ⬜ = Not Started — Ready to begin
+- 🟨 = Requirements created — Implementation story file is created and saved in `/docs/stories` folder
+- ✅ = Completed — Task finished and verified
 
 ---
 
