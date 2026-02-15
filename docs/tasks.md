@@ -7,9 +7,9 @@
 | REQ-0001 | Firebase project setup + env configuration | ✅ |
 | REQ-0002 | Firebase lib initialization (`lib/firebase.ts`, `lib/auth.ts`) | ✅ |
 | REQ-0003 | Session data operations (`lib/session.ts`) | ✅ |
-| REQ-0004 | `useSession` and `useAuth` hooks | ⬜ |
-| REQ-0005 | Home page — create session flow | ⬜ |
-| REQ-0006 | Join page — enter name and join | ⬜ |
+| REQ-0004 | `useSession` and `useAuth` hooks | 🟨 |
+| REQ-0005 | Home page — create session flow | 🟨 |
+| REQ-0006 | Join page — enter name and join | 🟨 |
 | REQ-0007 | Basic meeting page with lobby view | ⬜ |
 | REQ-0008 | Active speaker display component | ⬜ |
 | REQ-0009 | Timer component with color states | ⬜ |
@@ -31,7 +31,7 @@
 ## Status Symbols
 
 - **⬜ Not Started** — Ready to begin
-- **🟨 In Progress** — Agent is working
+- **🟨 In Progress** — Implementation story file is created and the agent is working or will start soon
 - **✅ Completed** — Task finished and verified
 
 ---
