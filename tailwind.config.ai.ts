@@ -1,3 +1,5 @@
+import { CssResource } from "next/dist/build/webpack/plugins/flight-manifest-plugin";
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -71,7 +73,7 @@ module.exports = {
         sm: '0 1px 2px 0 rgba(0, 0, 0, 0.5)',
         md: '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)',
       },
-      backgroundColor: (theme: (key: string) => any) => ({
+      backgroundColor: (theme: (key: string) => CssResource) => ({
         ...theme('colors'),
         'focus-ring': 'transparent', // Focus ring is outline, not bg
       }),
