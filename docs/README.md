@@ -1,12 +1,61 @@
-# TickTalk Design System — File Guide
+# TickTalk — Documentation Guide
 
-This folder now contains **3 key files** for AI-driven component generation.
+This folder contains **5 key files** that define the product, architecture, and design system for TickTalk.
 
 ---
 
 ## 📄 Files Overview
 
-### 1. **DESIGN_SYSTEM.md** (Primary Reference)
+### 1. **PRD.md** (Product Requirements Document)
+- **What**: Complete product specification and requirements
+- **Who**: Product managers, stakeholders, developers, AI agents
+- **Contains**:
+  - Problem statement and goals
+  - Target users and roles (Host, Participant)
+  - Core features (Session Creation, Lobby, Meeting Room, Timer Logic, Hand Raise)
+  - User flows (Host and Participant journeys)
+  - Functional and non-functional requirements
+  - Data model (Session, User)
+  - Edge cases and risk mitigation
+  - Success metrics
+  - Future enhancements roadmap
+- **Length**: ~400 lines
+- **Use**: Start here to understand WHAT we're building and WHY.
+
+---
+
+### 2. **plan.md** (Implementation Plan)
+- **What**: Technical architecture and implementation strategy
+- **Who**: Developers, architects, AI agents
+- **Contains**:
+  - Architecture overview (Next.js + Firebase stack)
+  - Complete data model with Firebase structure
+  - Page structure (Home, Join, Meeting)
+  - Core logic (Session creation, speaker selection, timer, transactions)
+  - Firebase configuration and security rules
+  - Component breakdown
+  - Edge case handling
+  - UX polish requirements
+  - Deployment steps
+- **Length**: ~500 lines
+- **Use**: Read this to understand HOW we're building it.
+
+---
+
+### 3. **tasks.md** (Task Tracker)
+- **What**: Implementation task list with progress tracking
+- **Who**: Developers, project managers, AI agents
+- **Contains**:
+  - 21 numbered tasks (REQ-0001 through REQ-0021)
+  - Status indicators (⬜ Not Started, 🟨 Requirements Created, ✅ Completed)
+  - Task breakdown from Firebase setup through end-to-end testing
+  - Notes section for implementation details
+- **Length**: ~80 lines
+- **Use**: Track progress and see what needs to be done next.
+
+---
+
+### 4. **DESIGN_SYSTEM.md** (Primary Design Reference)
 - **What**: Complete design system specification
 - **Who**: Architects, AI agents, component generators
 - **Contains**:
@@ -25,7 +74,7 @@ This folder now contains **3 key files** for AI-driven component generation.
 
 ---
 
-### 2. **AI_COMPONENT_GENERATOR_GUIDE.md** (Quick Reference)
+### 5. **AI_COMPONENT_GENERATOR_GUIDE.md** (Quick Reference)
 - **What**: Condensed quick-lookup for component generation
 - **Who**: AI agents, frontend developers
 - **Contains**:
@@ -42,67 +91,53 @@ This folder now contains **3 key files** for AI-driven component generation.
 
 ---
 
-### 3. **tailwind.config.ai.ts** (Optional Tooling)
-- **What**: Tailwind CSS configuration aligned to design system
-- **Who**: If your project uses Tailwind
-- **Contains**:
-  - Color theme extension
-  - Spacing scale
-  - Border radius variants
-  - FontSize with line height bundled
-  - Custom focus utilities
-  - Box shadow definitions
-  - Transition duration presets
-- **Length**: ~80 lines
-- **Use**: Copy `extend` section into your `tailwind.config.ts` OR use this file as-is if starting fresh.
-- **Note**: CSS variables (in DESIGN_SYSTEM.md section 12) are preferred for AI agents.
+## 🎯 How to Use These Files
+
+### For Product Understanding (Start Here)
+
+1. **Read [PRD.md](PRD.md)** first to understand:
+   - What problem we're solving
+   - Who the users are
+   - What features are required
+   - Success criteria
+
+2. **Read [plan.md](plan.md)** to understand:
+   - Technical architecture decisions
+   - Data model and Firebase structure
+   - Implementation approach
+   - Component architecture
+
+3. **Check [tasks.md](tasks.md)** to see:
+   - What's been completed (✅)
+   - What's in progress (🟨)
+   - What's next (⬜)
 
 ---
 
-## 🎯 How to Use These Files
-
-### For AI Component Generation (Recommended)
+### For Component Development
 
 1. **Start with [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)**
    - Read sections 1.1 (Colors), 1.2 (Spacing), 1.3 (Typography)
    - Review section 8 (Component Specs) for the exact component you're building
-   - Check section 13 (Implementation Notes) — this is for you
+   - Check section 13 (Implementation Notes) — this is for AI agents
 
 2. **Reference [AI_COMPONENT_GENERATOR_GUIDE.md](AI_COMPONENT_GENERATOR_GUIDE.md)**
    - Copy-paste the exact CSS/structure for your component
    - Use the "Token Quick Reference" for values
    - Cross-check states (Default, Hover, Active, Disabled, Focus)
 
-3. **Implement in Your Language**
+3. **Implement Using CSS Variables**
    - Use **CSS variables** (section 12 of DESIGN_SYSTEM.md)
-   - Or use **Tailwind** (if you configure `tailwind.config.ai.ts`)
+   - Or use Tailwind (see tailwind.config.ts in root)
    - OR hardcode the exact values (less ideal, but works)
 
 ---
 
-### For Manual Design Reviews
+### For Design Reviews
 
 1. Read the **Design Philosophy** in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) intro
 2. Check the **Meeting Page Layout** (section 9)
 3. Review **State Documentation** (section 10) — critical!
-
----
-
-### For Tailwind Users
-
-1. Copy the `extend` section from `tailwind.config.ai.ts` into your `tailwind.config.ts`
-2. Use semantic class names:
-   ```jsx
-   // Good:
-   <button className="bg-brand text-surface px-m py-s rounded-none">
-     Start Meeting
-   </button>
-
-   // Avoid:
-   <button className="bg-blue-500 text-white px-4 py-2">
-     Start Meeting
-   </button>
-   ```
 
 ---
 
@@ -166,7 +201,7 @@ All combinations meet WCAG AA 4.5:1 contrast minimum.
 **A**: No. Only values in section 1.2 of DESIGN_SYSTEM.md are allowed. This ensures AI consistency.
 
 ### Q: Do I have to use Tailwind?
-**A**: No. CSS variables (section 12) are preferred for AI agents. Use Tailwind only if your build already depends on it.
+**A**: No. CSS variables (section 12) are preferred for AI agents. Tailwind configuration exists in the root if needed.
 
 ### Q: Can I add more component variants?
 **A**: Not for MVP. 8 components are tested and sufficient. Add variants in Phase 2+.
@@ -187,13 +222,28 @@ All combinations meet WCAG AA 4.5:1 contrast minimum.
 
 ## 📞 Questions?
 
-If an AI agent is missing a token or spec:
-1. Check [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) section 8 (components) or 12 (tokens)
-2. Check [AI_COMPONENT_GENERATOR_GUIDE.md](AI_COMPONENT_GENERATOR_GUIDE.md) quick reference
-3. **Do not invent tokens.** Use closest matching or escalate.
+If an AI agent is missing information:
+
+**For Product/Requirements**: Check [PRD.md](PRD.md)  
+**For Architecture/Implementation**: Check [plan.md](plan.md)  
+**For Task Status**: Check [tasks.md](tasks.md)  
+**For Design Tokens/Components**: Check [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) section 8 (components) or 12 (tokens)  
+**For Quick Component Reference**: Check [AI_COMPONENT_GENERATOR_GUIDE.md](AI_COMPONENT_GENERATOR_GUIDE.md)  
+
+**Do not invent tokens, features, or requirements.** Use existing specs or escalate.
 
 ---
 
-**Version**: TickTalk Design System v1.0 (MVP)  
+## 📂 Recommended Reading Order
+
+1. **PRD.md** → Understand the product
+2. **plan.md** → Understand the architecture
+3. **tasks.md** → See current progress
+4. **DESIGN_SYSTEM.md** → Learn the design tokens
+5. **AI_COMPONENT_GENERATOR_GUIDE.md** → Generate components
+
+---
+
+**Version**: TickTalk Documentation v1.0 (MVP)  
 **Date**: 2026-02-15  
-**Status**: Ready for AI component generation
+**Status**: Ready for implementation
