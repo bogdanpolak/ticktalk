@@ -1,4 +1,4 @@
-# TickTalk
+# Tick-Talk
 
 ## Getting Started
 

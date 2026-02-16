@@ -172,7 +172,7 @@ export default function JoinPage({ params }: PageProps) {
   return (
     <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">TickTalk</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tick-Talk</h1>
         <p className="text-gray-600 mb-8">Join a speaking meeting</p>
 
         {/* Session Info */}
@@ -384,7 +384,7 @@ Meeting page loads and subscribes to session
 - Route: `/join/[sessionId]`
 - Dynamic segment: `sessionId` (string)
 - Can come from:
-  - Email/message with link: `https://ticktalk.vercel.app/join/abc123`
+  - Email/message with link: `https://Tick-Talk.vercel.app/join/abc123`
   - QR code pointing to same URL
   - Manually typed if user knows ID
 

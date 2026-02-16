@@ -8,7 +8,7 @@
 
 ## Overview
 
-Implement the meeting page (`app/meeting/[sessionId]/page.tsx`) — the central hub of the TickTalk application. This page renders conditionally based on the session status:
+Implement the meeting page (`app/meeting/[sessionId]/page.tsx`) — the central hub of the Tick-Talk application. This page renders conditionally based on the session status:
 
 1. **Lobby** (`status: "lobby"`) — waiting room before the meeting starts
 2. **Active** (`status: "active"`) — live meeting with speaker, timer, controls (placeholder in this task)

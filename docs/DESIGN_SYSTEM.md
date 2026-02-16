@@ -1,7 +1,7 @@
-# TickTalk Design System v1
+# Tick-Talk Design System v1
 ## MVP — Dark Mode First, AI Agent Consumable
 
-**Purpose**: Automated UI component generation for consistent TickTalk interface. All values are deterministic and non-negotiable.
+**Purpose**: Automated UI component generation for consistent Tick-Talk interface. All values are deterministic and non-negotiable.
 
 **Scope**: Internal dev teams. Desktop-first. Brand-aware.
 

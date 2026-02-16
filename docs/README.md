@@ -1,6 +1,6 @@
-# TickTalk — Documentation Guide
+# Tick-Talk — Documentation Guide
 
-This folder contains **5 key files** that define the product, architecture, and design system for TickTalk.
+This folder contains **5 key files** that define the product, architecture, and design system for Tick-Talk.
 
 ---
 
@@ -244,6 +244,6 @@ If an AI agent is missing information:
 
 ---
 
-**Version**: TickTalk Documentation v1.0 (MVP)  
+**Version**: Tick-Talk Documentation v1.0 (MVP)  
 **Date**: 2026-02-15  
 **Status**: Ready for implementation

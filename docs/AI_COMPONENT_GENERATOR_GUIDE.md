@@ -1,4 +1,4 @@
-# TickTalk Design System — AI Component Generator Guide
+# Tick-Talk Design System — AI Component Generator Guide
 
 This is a **quick lookup** for AI agents building components. Use this as your source of truth.
 

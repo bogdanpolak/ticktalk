@@ -2,13 +2,13 @@
 
 ## Product Name
 
-**TickTalk**
+**Tick-Talk**
 
 ---
 
 # 1. Overview
 
-**TickTalk** is a lightweight real-time web application that enforces structured, time-boxed speaking during Standup and Grooming meetings.
+**Tick-Talk** is a lightweight real-time web application that enforces structured, time-boxed speaking during Standup and Grooming meetings.
 
 It enables:
 

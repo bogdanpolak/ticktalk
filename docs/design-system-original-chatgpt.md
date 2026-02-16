@@ -33,7 +33,7 @@ The interface should feel:
 
 ---
 
-# 2. Token Architecture for TickTalk
+# 2. Token Architecture for Tick-Talk
 
 We’ll keep this lean because it’s MVP.
 
@@ -189,7 +189,7 @@ Not through opacity tricks — through hierarchy and spacing.
 
 ---
 
-# 7. Specific Design Decisions for TickTalk
+# 7. Specific Design Decisions for Tick-Talk
 
 ### 🎤 Active Speaker Highlight
 

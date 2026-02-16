@@ -1,9 +1,9 @@
 ---
 name: implement-req
-description: Implement a TickTalk project requirement based on its specification file.
+description: Implement a Tick-Talk project requirement based on its specification file.
 ---
 
-Implement a TickTalk project requirement based on its specification file.
+Implement a Tick-Talk project requirement based on its specification file.
 
 # Parameters
 
@@ -94,9 +94,9 @@ Perform these three updates:
 **Status**: ✅ Completed
 ```
 
-**(b)** Copy the requirement file to the completed subfolder:
+**(b)** Move the requirement file to the completed subfolder:
 ```bash
-cp docs/stories/REQ-XXXX-*.md docs/stories/completed/
+mv docs/stories/REQ-XXXX-*.md docs/stories/completed/
 ```
 
 **(c)** In `docs/tasks.md`, update the task status from ⬜ or 🟨 to ✅:

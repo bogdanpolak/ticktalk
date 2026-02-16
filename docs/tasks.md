@@ -1,4 +1,4 @@
-# TickTalk — Implementation Tasks
+# Tick-Talk — Implementation Tasks
 
 ## Task Tracker
 

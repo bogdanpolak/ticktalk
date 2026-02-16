@@ -1,4 +1,4 @@
-# TickTalk — Implementation Plan
+# Tick-Talk — Implementation Plan
 
 > Updated: February 2025
 > Based on PRD + tech architecture decisions

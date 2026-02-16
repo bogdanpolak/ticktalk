@@ -174,7 +174,7 @@ function ActiveMeetingView({
     <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-lg font-medium text-[var(--color-text-secondary)] mb-6">
-          TickTalk Meeting
+          Tick-Talk Meeting
         </h1>
 
         {/* Active Speaker Display */}
