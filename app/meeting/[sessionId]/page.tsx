@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useSession } from '@/app/hooks/useSession'
-import { startMeeting } from '@/lib/session'
+import { startMeeting, getSession, selectNextSpeaker } from '@/lib/session'
 import { ActiveSpeaker } from '@/components/ActiveSpeaker'
 import type { Session } from '@/lib/session'
 
@@ -105,6 +105,16 @@ function LobbyView({
     setIsStarting(true)
     try {
       await startMeeting(sessionId)
+      
+      const AutoSelectHostAsSpeaker = async () => {
+        // TODO: TEMPORARY - Remove this when REQ-0011 speaker selection component is implemented
+        // remove getSession, selectNextSpeaker imports if they are not used anywhere else in this file after REQ-0011 is implemented
+        const sessionData = await getSession(sessionId)
+        if (sessionData?.hostId) {
+          await selectNextSpeaker(sessionId, sessionData.hostId)
+        }
+      }
+      AutoSelectHostAsSpeaker()
     } catch (err) {
       console.error('Failed to start meeting:', err)
       setIsStarting(false)
