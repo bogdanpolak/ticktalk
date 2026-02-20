@@ -90,7 +90,7 @@ export default function HomePage() {
           marginBottom: 'var(--spacing-s)',
           marginTop: 0
         }}>
-          TickTalk
+          Tick-Talk
         </h1>
         <p style={{
           fontSize: '14px',
