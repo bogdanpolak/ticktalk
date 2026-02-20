@@ -76,13 +76,25 @@ export async function joinSession(
   userId: string,
   userName: string
 ): Promise<void> {
+  const trimmedName = userName.trim();
+
+  if (!trimmedName) {
+    throw new Error('Participant name is required');
+  }
+
   const participantRef = ref(db, `sessions/${sessionId}/participants/${userId}`);
-  
-  await set(participantRef, {
-    name: userName,
-    role: 'participant',
-    isHandRaised: false
-  });
+
+  try {
+    await set(participantRef, {
+      name: trimmedName,
+      role: 'participant',
+      isHandRaised: false
+    });
+  } catch (error) {
+    throw new Error(
+      `Failed to join session: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
 }
 
 /**
