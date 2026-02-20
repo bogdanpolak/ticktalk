@@ -7,6 +7,7 @@ import { useAuth } from '@/app/hooks/useAuth'
 import { useSession } from '@/app/hooks/useSession'
 import { startMeeting, getSession, selectNextSpeaker } from '@/lib/session'
 import { ActiveSpeaker } from '@/components/ActiveSpeaker'
+import { Timer } from '@/components/Timer'
 import type { Session } from '@/lib/session'
 
 export default function MeetingPage() {
@@ -255,6 +256,13 @@ function ActiveMeetingView({
         />
 
         {/* Timer — REQ-0009 */}
+        <div className="mt-6">
+          <Timer
+            slotEndsAt={session.slotEndsAt}
+            slotDurationSeconds={session.slotDurationSeconds}
+          />
+        </div>
+
         {/* Participant List — REQ-0013 */}
         {/* Speaker Selector — REQ-0011 */}
       </div>
