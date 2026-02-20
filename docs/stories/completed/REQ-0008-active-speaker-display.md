@@ -1,6 +1,6 @@
 # REQ-0008: Active Speaker Display Component
 
-**Status**: ⬜ Not Started  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Feature)  
 **Dependencies**: REQ-0007
 

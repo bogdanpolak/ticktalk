@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useSession } from '@/app/hooks/useSession'
 import { startMeeting } from '@/lib/session'
+import { ActiveSpeaker } from '@/components/ActiveSpeaker'
 import type { Session } from '@/lib/session'
 
 export default function MeetingPage() {
@@ -32,7 +33,13 @@ export default function MeetingPage() {
         />
       )
     case 'active':
-      return <ActiveMeetingView />
+      return (
+        <ActiveMeetingView
+          session={session}
+          sessionId={sessionId}
+          userId={userId}
+        />
+      )
     case 'finished':
       return <FinishedView session={session} />
     default:
@@ -207,14 +214,39 @@ function FinishedView({ session }: { session: Session }) {
   )
 }
 
-function ActiveMeetingView(): React.ReactNode {
+function ActiveMeetingView({
+  session,
+  sessionId,
+  userId
+}: {
+  session: Session
+  sessionId: string
+  userId: string | null
+}): React.ReactNode {
+  const isHost = userId === session.hostId
+  const activeSpeakerName = session.activeSpeakerId
+    ? session.participants[session.activeSpeakerId]?.name ?? 'Unknown'
+    : null
+
   return (
     <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
-      <div className="max-w-2xl mx-auto text-center py-12">
-        <h1 className="text-[32px] font-medium leading-[1.3] mb-4">Meeting in Progress</h1>
-        <p className="text-[var(--color-text-secondary)]">
-          Active meeting view — components will be added in upcoming tasks.
-        </p>
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-[18px] font-medium leading-[1.4] text-[var(--color-text-secondary)] mb-6">
+          Tick-Talk Meeting
+        </h1>
+
+        <ActiveSpeaker
+          activeSpeakerId={session.activeSpeakerId}
+          activeSpeakerName={activeSpeakerName}
+          currentUserId={userId}
+          isHost={isHost}
+          sessionId={sessionId}
+          sessionStatus={session.status}
+        />
+
+        {/* Timer — REQ-0009 */}
+        {/* Participant List — REQ-0013 */}
+        {/* Speaker Selector — REQ-0011 */}
       </div>
     </main>
   )
