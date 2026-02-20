@@ -5,6 +5,10 @@ description: Implement a Tick-Talk project requirement based on its specificatio
 
 Implement a Tick-Talk project requirement based on its specification file.
 
+# Important
+
+Before starting implementation, ensure the the review the [Task Tracker](/docs/tasks.md) to check the status of the requirement and its dependencies. Make sure all dependent tasks are completed before you begin implementation. If not do not start the implementation and instead notify the relevant team members to complete the dependencies first.
+
 # Parameters
 
 The user will provide one of the following:
