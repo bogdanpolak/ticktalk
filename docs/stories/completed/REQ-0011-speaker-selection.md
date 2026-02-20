@@ -1,6 +1,6 @@
 # REQ-0011: Speaker Selection with Transaction Logic
 
-**Status**: ⬜ Not Started  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Feature)  
 **Dependencies**: REQ-0007, REQ-0008
 
