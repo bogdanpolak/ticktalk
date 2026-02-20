@@ -30,7 +30,7 @@
 
 ## Status Symbols
 
-- ⬜ = Not Started — Ready to begin
+- ⬜ = Requirements needed — Specification needed
 - 🟨 = Requirements created — Implementation story file is created and saved in `/docs/stories` folder
 - ✅ = Completed — Task finished and verified
 
