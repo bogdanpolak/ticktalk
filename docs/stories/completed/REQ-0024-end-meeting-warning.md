@@ -1,6 +1,6 @@
 # REQ-0024: End Meeting Warning for Unspoken Users
 
-**Status**: 🟨 Requirements created  
+**Status**: ✅ Completed  
 **Priority**: Medium (Host control)  
 **Dependencies**: REQ-0014, REQ-0017
 

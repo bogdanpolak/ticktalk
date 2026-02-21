@@ -13,6 +13,7 @@ import { ParticipantList } from '@/components/ParticipantList'
 import { SpeakerSelector } from '@/components/SpeakerSelector'
 import { HandRaiseButton } from '@/components/HandRaiseButton'
 import { MeetingSummary } from '@/components/MeetingSummary'
+import { EndMeetingDialog } from '@/components/EndMeetingDialog'
 import type { Session } from '@/lib/session'
 
 export default function MeetingPage() {
@@ -393,6 +394,8 @@ function ActiveMeetingView({
               <HostEndMeetingControl
                 sessionId={sessionId}
                 activeSpeakerId={session.activeSpeakerId ?? null}
+                participants={session.participants}
+                spokenUserIds={session.spokenUserIds || []}
               />
             )}
           </section>
@@ -413,23 +416,42 @@ function ActiveMeetingView({
 
 function HostEndMeetingControl({
   sessionId,
-  activeSpeakerId
+  activeSpeakerId,
+  participants,
+  spokenUserIds
 }: {
   sessionId: string
   activeSpeakerId: string | null
+  participants: Session['participants']
+  spokenUserIds: string[]
 }) {
   const [isEnding, setIsEnding] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const unspokenCount = Object.keys(participants).filter(
+    participantId => !spokenUserIds.includes(participantId)
+  ).length
 
   const handleEndMeeting = async () => {
     setError(null)
     setIsEnding(true)
     try {
       await endMeeting(sessionId)
+      setIsDialogOpen(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to end meeting')
       setIsEnding(false)
     }
+  }
+
+  const handleEndMeetingClick = () => {
+    if (unspokenCount > 0) {
+      setIsDialogOpen(true)
+      return
+    }
+
+    void handleEndMeeting()
   }
 
   return (
@@ -437,7 +459,7 @@ function HostEndMeetingControl({
       <div className="flex flex-col gap-[var(--spacing-s)]">
         <button
           type="button"
-          onClick={handleEndMeeting}
+          onClick={handleEndMeetingClick}
           disabled={isEnding}
           className="h-11 px-[var(--spacing-m)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-surface-subtle)] active:bg-[var(--color-surface-subtle)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
         >
@@ -450,6 +472,14 @@ function HostEndMeetingControl({
           </p>
         )}
       </div>
+
+      <EndMeetingDialog
+        isOpen={isDialogOpen}
+        unspokenCount={unspokenCount}
+        onCancel={() => setIsDialogOpen(false)}
+        onConfirm={handleEndMeeting}
+        isConfirming={isEnding}
+      />
     </section>
   )
 }
