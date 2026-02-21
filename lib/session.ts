@@ -8,6 +8,14 @@ export interface Participant {
   name: string;
   role: 'host' | 'participant';
   isHandRaised: boolean;
+  totalSpokeDurationSeconds?: number;
+  speakingHistory?: SpeakingHistoryEntry[];
+}
+
+export interface SpeakingHistoryEntry {
+  startTime: number;
+  endTime: number;
+  durationSeconds: number;
 }
 
 export interface Session {
@@ -17,6 +25,7 @@ export interface Session {
   status: SessionStatus;
   activeSpeakerId: string | null | undefined;
   slotEndsAt: number | null | undefined;
+  slotStartedAt?: number | null;
   spokenUserIds: string[];
   participants: {
     [userId: string]: Participant;
@@ -62,12 +71,15 @@ export async function createSession(input: CreateSessionInput): Promise<string> 
     status: 'lobby',
     activeSpeakerId: null,
     slotEndsAt: null,
+    slotStartedAt: null,
     spokenUserIds: [],
     participants: {
       [input.hostId]: {
         name: input.hostName,
         role: 'host',
-        isHandRaised: false
+        isHandRaised: false,
+        totalSpokeDurationSeconds: 0,
+        speakingHistory: []
       }
     }
   };
@@ -96,7 +108,9 @@ export async function joinSession(
     await set(participantRef, {
       name: trimmedName,
       role: 'participant',
-      isHandRaised: false
+      isHandRaised: false,
+      totalSpokeDurationSeconds: 0,
+      speakingHistory: []
     });
   } catch (error) {
     throw new Error(
@@ -165,7 +179,8 @@ export async function endMeeting(sessionId: string): Promise<void> {
   await updateSession(sessionId, {
     status: 'finished',
     activeSpeakerId: null,
-    slotEndsAt: null
+    slotEndsAt: null,
+    slotStartedAt: null
   });
 }
 
@@ -203,8 +218,10 @@ export async function selectNextSpeaker(
     }
     
     // Set new active speaker
+    const now = Date.now();
     session.activeSpeakerId = nextSpeakerId;
-    session.slotEndsAt = Date.now() + session.slotDurationSeconds * 1000;
+    session.slotStartedAt = now;
+    session.slotEndsAt = now + session.slotDurationSeconds * 1000;
     
     // Add to spoken list
     const updatedSpokenUserIds = [...spokenUserIds, nextSpeakerId];
@@ -227,9 +244,51 @@ export async function selectNextSpeaker(
  * End the current speaker's slot
  */
 export async function endCurrentSlot(sessionId: string): Promise<void> {
-  await updateSession(sessionId, {
-    activeSpeakerId: null,
-    slotEndsAt: null
+  const sessionRef = ref(db, `sessions/${sessionId}`);
+
+  await runTransaction(sessionRef, (session: Session | null) => {
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    const activeSpeakerId = session.activeSpeakerId;
+    if (!activeSpeakerId) {
+      throw new Error('No active speaker to end');
+    }
+
+    const participant = session.participants?.[activeSpeakerId];
+    if (!participant) {
+      throw new Error('Active speaker participant not found');
+    }
+
+    const now = Date.now();
+    const slotStartedAt = session.slotStartedAt;
+
+    let durationSeconds = session.slotDurationSeconds;
+    if (typeof slotStartedAt === 'number') {
+      const durationMs = Math.max(0, now - slotStartedAt);
+      durationSeconds = Math.round(durationMs / 1000);
+    } else {
+      console.warn('slotStartedAt missing, using slotDurationSeconds fallback');
+    }
+
+    const speakingHistory = participant.speakingHistory ?? [];
+    const totalSpokeDurationSeconds = participant.totalSpokeDurationSeconds ?? 0;
+
+    const entry: SpeakingHistoryEntry = {
+      startTime: typeof slotStartedAt === 'number' ? slotStartedAt : now,
+      endTime: now,
+      durationSeconds
+    };
+
+    participant.speakingHistory = [...speakingHistory, entry];
+    participant.totalSpokeDurationSeconds = totalSpokeDurationSeconds + durationSeconds;
+
+    session.activeSpeakerId = null;
+    session.slotEndsAt = null;
+    session.slotStartedAt = null;
+
+    return session;
   });
 }
 
