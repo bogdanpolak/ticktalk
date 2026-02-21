@@ -120,16 +120,15 @@ Host:
 
 All users see:
 
-* Active speaker (highlighted)
+* Participant list (includes active speaker indicator)
 * Countdown timer (or "Time Expired" indicator + over-time display)
-* Participant list
 * Hand raise indicators
 * Visual indicators showing who has already spoken and total speaking time
+* Participant list is placed above the timer in the main column
 
 Host:
 
 * Can select themselves or any participant as first speaker
-* Can see the same "Participants" section as active speaker (with eligible next speakers highlighted)
 * Can end meeting at any time (button always enabled)
 * "End Meeting" shows warning dialog if unspoken participants remain
 * Cannot intervene during active speaker slots (no override)
@@ -137,7 +136,7 @@ Host:
 Active Speaker:
 
 * Sees "End Slot" button
-* Can select next speaker from those who haven't spoken yet
+* Can select next speaker from those who haven't spoken yet (if any remain)
 * Sees cumulative speaking time for all participants
 
 ---
@@ -156,7 +155,7 @@ Active Speaker:
   * Slot remains active - speaker is NOT automatically ended
   * Speaker can continue and must manually end their slot
   * If speaker continues past allocated time, timer switches to over-time display format: "+0:45" (red background, distinct visual state)
-  * Speaker then selects next from participants who haven't spoken
+  * Speaker then selects next from participants who haven't spoken (if any remain)
 
 Server remains authoritative for slot duration.
 
@@ -165,9 +164,9 @@ Server remains authoritative for slot duration.
 ## 5.5 Speaking Duration Tracking
 
 * Each speaker's actual speaking duration is calculated from when slot begins to when slot ends
-* Durations are tracked per round (reset when `spokenUserIds` resets)
-* Participants who exceed their `slotDurationSeconds` are flagged as "Over Time" in the meeting summary
-* Total speaking time displayed in Meeting Summary view with over-time highlighting
+* Durations are tracked per session (no multi-round reset)
+* Participants who exceed their `slotDurationSeconds` are shown as "Over Time" in the meeting summary
+* Total speaking time displayed in Meeting Summary view without overtime highlighting
 
 ---
 
@@ -177,9 +176,8 @@ When meeting is finished or "End Meeting" is clicked:
 
 * Display list of all participants with:
   * Name
-  * Total time spoken (cumulative across all rounds)
+  * Total time spoken (cumulative across the session)
   * Over-time indicator if they exceeded `slotDurationSeconds`
-  * Number of turns taken
 * Host can close summary to return to meeting or fully end session
 
 ---
@@ -223,7 +221,7 @@ Open Link → Enter Name → Wait in Lobby → Meeting Starts → Speak When Act
 | F3  | Participants can join session                                |
 | F4  | Host can start meeting                                       |
 | F5  | Host can select first speaker                                |
-| F6  | Active speaker is visually highlighted                       |
+| F6  | Active speaker indicator appears in the participant list      |
 | F7  | Countdown timer visible to all                               |
 | F8  | Active speaker can end slot early                            |
 | F9  | When time expires, show indicator but keep speaker active    |
@@ -231,14 +229,17 @@ Open Link → Enter Name → Wait in Lobby → Meeting Starts → Speak When Act
 | F11 | All clients receive real-time updates                        |
 | F12 | System handles reconnects gracefully                         |
 | F13 | Speaker selection excludes users in spokenUserIds            |
-| F14 | Reset speaker history when all participants have spoken      |
+| F14 | Prevent speaker selection once all participants have spoken  |
 | F15 | Host cannot override or intervene during active speaker slot |
 | F16 | Visual indicators show which participants have already spoken|
 | F17 | Timer displays over-time in format +0:MM (e.g., +1:12)       |
-| F18 | System tracks actual speaking duration per speaker per round |
-| F19 | Meeting Summary shows total time spoken + over-time highlight|
+| F18 | System tracks actual speaking duration per speaker per session |
+| F19 | Meeting Summary shows total time spoken + overtime indicator |
 | F20 | Host can select themselves as first speaker                  |
 | F21 | End Meeting always enabled with warning for unspoken users   |
+| F22 | Participant list is shown in the main column for all breakpoints |
+| F23 | Participant row shows total time as "Total: M:SS" with no overtime highlight |
+| F24 | Active speaker has no dedicated panel (list indicator only)  |
 
 ---
 
@@ -310,7 +311,7 @@ Participant {
   name: string
   role: 'host' | 'participant'
   isHandRaised: boolean
-  totalSpokeDurationSeconds: number     // Cumulative across all rounds
+  totalSpokeDurationSeconds: number     // Cumulative across the session
   speakingHistory: [
     {
       startTime: number,                 // Unix timestamp (ms) when slot started
@@ -331,8 +332,8 @@ Participant {
 | Host disconnects              | Promote first participant to host                 |
 | Two users select next speaker | Server validates and rejects duplicate            |
 | Timer drift                   | Server authoritative `slotEndsAt`                 |
-| All participants have spoken  | Reset `spokenUserIds`, allow re-selection         |
-| Speaker exceeds time limit    | Timer shows "+0:MM" over-time format, highlights in summary |
+| All participants have spoken  | Prevent next-speaker selection; host ends meeting |
+| Speaker exceeds time limit    | Timer shows "+0:MM" over-time format; summary shows overtime indicator |
 | Unspoken users on end meeting  | Warning dialog confirms ending with unspoken users |
 | Selection of previous speaker | Server validates against `spokenUserIds`, rejects |
 
@@ -404,9 +405,9 @@ After 1 month of internal usage:
 # 16. Design Decisions
 
 ## Speaker Selection
-**Decision:** Free choice from participants who haven't spoken yet.
-* Active speaker can select any participant who hasn't had a turn in current round
-* Once all participants have spoken, reset the history and allow re-selection
+**Decision:** Single-turn selection with no reset.
+* Active speaker can select any participant who has not spoken yet
+* Once all participants have spoken, no further selection is allowed
 * No ordered queue - maintains flexibility while ensuring fairness
 
 ## Host Role as Full Participant
@@ -424,7 +425,7 @@ After 1 month of internal usage:
 * If speaker exceeds allocated time: Timer displays over-time as "+M:SS" (e.g., "+1:12") in distinct visual state
 * Speaker slot remains active until speaker manually ends it
 * Gives speakers control to finish their thought while making time overages visible to all
-* Over-time is highlighted in Meeting Summary with cumulative total per participant
+* Over-time is indicated in Meeting Summary without special highlight styling
 
 ## Meeting Duration
 **Decision:** Meetings can exceed total planned duration.

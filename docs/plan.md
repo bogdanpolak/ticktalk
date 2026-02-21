@@ -49,7 +49,7 @@ sessions/{sessionId}: {
       name: string,
       role: "host" | "participant",
       isHandRaised: boolean,
-      totalSpokeDurationSeconds: number,   // Cumulative across all rounds
+      totalSpokeDurationSeconds: number,   // Cumulative across the session
       speakingHistory: [
         {
           startTime: number,                // Unix timestamp (ms) when this slot started
@@ -64,11 +64,10 @@ sessions/{sessionId}: {
 
 ### Key rules
 
-- `spokenUserIds` tracks who has already spoken in the current round.
-- When all participants have spoken, `spokenUserIds` resets to empty.
+- `spokenUserIds` tracks who has already spoken in the session (no multi-round reset).
 - `slotEndsAt` is authoritative — clients compute countdown locally and display over-time if exceeded.
 - `slotStartedAt` marks when current speaker's slot began (set on speaker selection).
-- `totalSpokeDurationSeconds` accumulates across all rounds, never resets.
+- `totalSpokeDurationSeconds` accumulates across the session, never resets.
 - `speakingHistory` records each individual speak slot with start/end/duration for analytics.
 - Timer expiry shows an indicator but does NOT auto-advance; over-time display shows if speaker exceeds slot duration.
 - Speaker manually ends slot; system calculates actual duration and stores in history.
@@ -107,7 +106,8 @@ Single page with conditional rendering based on `session.status`:
 - All see shareable join link
 
 **Active state** (`status: "active"`):
-- Active speaker (highlighted, large)
+- Layout order: Participants list -> Timer -> Meeting controls -> Hand raise -> Speaker selector -> Host end meeting
+- Participant list (shows active speaker indicator + total time per participant)
 - Countdown timer (large, central) with over-time display if speaker exceeds slot duration
 - "⏰ Time Expired" indicator when timer reaches 0, then switches to over-time display "+0:MM"
 - Participant list with:
@@ -117,7 +117,6 @@ Single page with conditional rendering based on `session.status`:
   - 📊 Total speaking time per participant
 - Active speaker sees:
   - "End My Slot" button
-  - Participant picker (only those who haven't spoken)
   - Cumulative speaking time display
 - Host sees:
   - "End Meeting" button (always enabled)
@@ -129,9 +128,7 @@ Single page with conditional rendering based on `session.status`:
   - List of all participants with:
     - Name
     - Total speaking time (cumulative)
-    - Over-time count (if applicable)
-    - Number of turns
-  - Red highlight for participants who exceeded `slotDurationSeconds` in any turn
+    - Over-time indicator (if applicable)
   - Host can close to return to active meeting or fully end session
 
 ---
@@ -185,16 +182,13 @@ runTransaction(ref(db, `sessions/${sessionId}`), (session) => {
   // Validate: nextSpeakerId not in spokenUserIds
   if (session.spokenUserIds?.includes(nextSpeakerId)) return
   
+  const participantIds = Object.keys(session.participants)
+  if ((session.spokenUserIds || []).length >= participantIds.length) return
+
   session.activeSpeakerId = nextSpeakerId
   session.slotStartedAt = Date.now()  // Mark start of this speaker's slot
   session.slotEndsAt = Date.now() + session.slotDurationSeconds * 1000
   session.spokenUserIds = [...(session.spokenUserIds || []), nextSpeakerId]
-  
-  // Reset if all have spoken
-  const participantIds = Object.keys(session.participants)
-  if (session.spokenUserIds.length >= participantIds.length) {
-    session.spokenUserIds = []
-  }
   
   return session
 })
@@ -228,7 +222,7 @@ update(ref(db, `sessions/${sessionId}`), {
 })
 ```
 
-After ending slot, the speaker selects the next participant (combined into one action for better UX — speaker picks next, which triggers 4.4). System automatically calculates and stores actual duration in speaking history.
+After ending slot, the speaker selects the next participant (combined into one action for better UX — speaker picks next, which triggers 4.4). If no eligible participants remain, the selector is hidden and the host ends the meeting. System automatically calculates and stores actual duration in speaking history.
 
 ### 4.6 Timer Display
 
@@ -341,12 +335,11 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 ```
 components/
   Timer.tsx                → Countdown + over-time display with color states
-  ParticipantList.tsx      → List with status + speaking time indicators
-  ActiveSpeaker.tsx        → Highlighted current speaker display
+  ParticipantList.tsx      → List with status + total time badge (includes active speaker)
   SpeakerSelector.tsx      → Pick next speaker from eligible list (host + active speaker)
   HandRaiseButton.tsx      → Toggle hand raise
   MeetingControls.tsx      → Host/speaker action buttons
-  MeetingSummary.tsx       → Finished state view with speaking times + over-time highlight
+  MeetingSummary.tsx       → Finished state view with speaking times + overtime indicator
   EndMeetingDialog.tsx     → Confirmation modal for unspoken participants warning
   LobbyView.tsx            → Pre-meeting waiting room
 
@@ -371,8 +364,8 @@ hooks/
 | Host disconnects              | Promote first participant to host role                     |
 | Two users select next speaker | Firebase transaction — only first one succeeds             |
 | Timer drift across clients    | Server-authoritative `slotEndsAt`, clients compute locally |
-| All participants have spoken  | Reset `spokenUserIds` to empty array                       |
-| Speaker exceeds time limit    | Timer shows "Time Expired", speaker manually ends slot     |
+| All participants have spoken  | Prevent selection; host ends meeting                       |
+| Speaker exceeds time limit    | Timer shows "Time Expired"; summary shows overtime indicator |
 | Session link used after finish| Show "Meeting ended" state                                 |
 | Browser tab inactive          | Re-sync on visibility change via Firebase reconnect        |
 
@@ -395,7 +388,7 @@ hooks/
 
 See [docs/tasks.md](tasks.md) for the complete task list with tracking and status updates.
 
-All 26 tasks must be completed to achieve a production-ready MVP.
+All 32 tasks must be completed to achieve a production-ready MVP.
 
 ---
 
@@ -425,7 +418,7 @@ All 26 tasks must be completed to achieve a production-ready MVP.
 
 ## 13. Success Criteria
 
-At MVP completion (all 26 tasks marked ✅):
+At MVP completion (all 32 tasks marked ✅):
 
 - All core features functional (create, join, speak, timer with over-time, end meeting with warnings)
 - Speaking duration tracking and Meeting Summary view working

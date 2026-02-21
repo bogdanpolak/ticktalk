@@ -29,8 +29,13 @@
 | REQ-0023 | Meeting Summary with speaking times | ✅ |
 | REQ-0024 | End Meeting warning for unspoken users | ✅ |
 | REQ-0025 | Mobile-responsive layout adjustments | ✅ |
-| REQ-0026 | Firebase security rules (basic) | ⬜ |
-| REQ-0027 | End-to-end testing & bug fixes | ⬜ |
+| REQ-0026 | Meeting layout: participant list in main column | ⬜ |
+| REQ-0027 | Remove Active Speaker panel | ⬜ |
+| REQ-0028 | Participant row total time badge | ⬜ |
+| REQ-0029 | Single-turn session flow (no reset) | ⬜ |
+| REQ-0030 | Meeting Summary overtime styling update | ⬜ |
+| REQ-0031 | Firebase security rules (basic) | ⬜ |
+| REQ-0032 | End-to-end testing & bug fixes | ⬜ |
 
 **Status Symbols**
 
@@ -88,3 +93,30 @@
 - Dialog: "X participant(s) haven't spoken yet. End meeting anyway?" with [Cancel] [End Meeting] buttons
 - Calculate unspoken: `participants not in spokenUserIds`
 - Make "End Meeting" button always enabled (remove speaker-active disabled state)
+
+### REQ-0028: Meeting Layout - Participant List in Main Column
+- Remove the right-side aside layout on large screens
+- Stack the participant list above the timer for all breakpoints
+- Maintain existing spacing and card styles
+
+### REQ-0029: Remove Active Speaker Panel
+- Remove ActiveSpeaker component usage from the meeting view
+- Rely on the participant list "Speaking" badge only
+- Ensure empty-speaker state is handled without the panel
+
+### REQ-0030: Participant Row Total Time Badge
+- Show total speaking time in each participant row
+- Display format: "Total: M:SS"
+- Place as a right-aligned badge next to status chips
+- Do not show overtime styling in the participant list
+
+### REQ-0031: Single-Turn Session Flow
+- Do not reset `spokenUserIds` when all participants have spoken
+- Prevent next-speaker selection once everyone has spoken
+- Hide the SpeakerSelector when no eligible participants remain
+- Keep end-slot behavior limited to the active speaker
+
+### REQ-0032: Meeting Summary Overtime Styling Update
+- Keep overtime indicator in Meeting Summary only
+- Remove red highlight styling for overtime rows
+- Keep total time display unchanged
