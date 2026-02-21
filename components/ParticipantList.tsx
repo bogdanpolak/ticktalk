@@ -1,3 +1,4 @@
+import { formatDuration } from '@/app/utils'
 import type { Participant } from '@/lib/session'
 
 interface ParticipantRow {
@@ -7,6 +8,7 @@ interface ParticipantRow {
   isHandRaised: boolean
   isActiveSpeaker: boolean
   hasSpoken: boolean
+  totalSpokeDurationSeconds: number
 }
 
 interface ParticipantListProps {
@@ -28,7 +30,8 @@ export function ParticipantList({
     role: userId === hostId ? 'host' : 'participant',
     isHandRaised: participant.isHandRaised,
     isActiveSpeaker: activeSpeakerId === userId,
-    hasSpoken: spokenUserIds.includes(userId)
+    hasSpoken: spokenUserIds.includes(userId),
+    totalSpokeDurationSeconds: participant.totalSpokeDurationSeconds ?? 0
   }))
 
   const sortedRows = rows.sort((a, b) => {
@@ -96,6 +99,9 @@ export function ParticipantList({
                       ✅ Spoke
                     </span>
                   )}
+                  <span className="inline-flex items-center gap-[var(--spacing-xs)] px-[var(--spacing-s)] py-[var(--spacing-xs)] border border-[var(--color-border)] text-[var(--color-text-secondary)] bg-[var(--color-surface)] rounded-[4px] text-[11px] sm:text-[12px] font-medium whitespace-nowrap">
+                    Total: {formatDuration(row.totalSpokeDurationSeconds)}
+                  </span>
                 </div>
               </li>
             )

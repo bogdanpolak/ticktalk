@@ -1,6 +1,6 @@
 # REQ-0028: Participant Row Total Time Badge
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: Medium (Participant list detail)
 **Dependencies**: REQ-0013, REQ-0020
 
