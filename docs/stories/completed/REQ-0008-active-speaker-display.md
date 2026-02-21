@@ -167,7 +167,7 @@ function ActiveMeetingView({
 }) {
   const isHost = userId === session.hostId
   const activeSpeakerName = session.activeSpeakerId
-    ? session.participants[session.activeSpeakerId]?.name ?? 'Unknown'
+    ? session.participants[session.activeSpeakerId]?.name ?? 'Waiting for speaker'
     : null
 
   return (

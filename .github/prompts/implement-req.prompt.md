@@ -7,8 +7,34 @@ Implement a Tick-Talk project requirement based on its specification file.
 
 # Important
 
-1. Before starting implementation, ensure the the review the [Task Tracker](/docs/tasks.md) to check the status of the requirement and its dependencies. Make sure all dependent tasks are completed before you begin implementation. If not do not start the implementation and instead notify the relevant team members to complete the dependencies first.
-2. When user provides multiple requirement to implement after each create a new git commit with the message `#REQ-XXXX: Requirement title`. This will help keep track of changes related to each requirement in version control.
+1. Requirement, implementation story, and task are all the same thing, and can be used interchangeably. 
+  - They all refer to the `/docs/stories/REQ-XXXX-*.md` files 
+  - They should contain the requirement specifications, acceptance criteria, and implementation details.
+2. Multiple stories.
+  - When user provides multiple requirement to implement, implement them in the order provided.
+  - Execute each requirement sequentially.
+3. Order of execution steps for each requirement:
+  1. Check [Task Tracker](/docs/tasks.md) status.
+  2. Analyze the requirement.
+  3. Check the dependencies listed in the requirement file. Make sure all dependent tasks are completed before you begin implementation. If not do not start the implementation, notify user and cancel the task.
+  4. If dependencies are not met, notify user and cancel the task.
+  5. If dependencies are met, implement the requirement.
+  6. Run lint and fix errors.
+  7. Build the project and fix errors.
+  8. Do not run tests, they don't exist yet.
+  9. Validate UI design for any created/modified components.
+    - For any UI components created or modified:
+      - Verify all colors use design system tokens from `docs/DESIGN_SYSTEM.md`
+      - Verify spacing uses only xs/s/m/l/xl/xxl values
+      - Verify typography follows the defined scale
+      - Verify interactive elements have focus states (2px outline, `--color-focus-ring`)
+      - Verify minimum 44px touch targets for buttons/inputs
+      - Verify dark mode is the primary theme
+  10. Validate acceptance criteria in the requirement file.
+  11. Move requirement file to completed folder. Use script provided bellow.
+  12. Mark task as completed in the requirement file (only in completed folder)
+  13. Mark task as completed in task tracker
+  14. Git commit with message `#REQ-XXXX: Requirement title`
 
 # Parameters
 
@@ -17,17 +43,13 @@ The user will provide one of the following:
 - A **file link** to a requirement file in `docs/stories/` folder
 - Multiple requirement IDs or file links — implement them in the order provided, but only if their dependencies are met
 
-# Context Files
+# References
 
-Before starting implementation, read and understand these files: 
-
-- **Requirement file** — the specific `docs/stories/REQ-XXXX-*.md` file containing acceptance criteria, implementation details, and file paths
+- **Requirement file** — `docs/stories/REQ-XXXX-*.md`
 - **Task Tracker** — [TASKS.md](/docs/tasks.md) for current task status and dependencies
-
-For UI and Next.JS component implementation, also reference:
-- **Design System** — [DESIGN_SYSTEM.md](/docs/DESIGN_SYSTEM.md)
-- **AI Component Generator Guide** — [AI_COMPONENT_GENERATOR_GUIDE.md](/docs/AI_COMPONENT_GENERATOR_GUIDE.md) for component creation rules and patterns
-
+- For UI and Next.JS component implementation, also reference:
+  - **Design System** — [DESIGN_SYSTEM.md](/docs/DESIGN_SYSTEM.md)
+  - **AI Component Generator Guide** — [AI_COMPONENT_GENERATOR_GUIDE.md](/docs/AI_COMPONENT_GENERATOR_GUIDE.md) for component creation rules and patterns
 
 # Project Structure
 
@@ -39,7 +61,7 @@ app/
   join/[sessionId]/page.tsx     → Join session (enter name)
   meeting/[sessionId]/page.tsx  → Lobby + Meeting Room
   hooks/                        → Custom React hooks
-  components/                   → Reusable UI components
+components/                     → Reusable UI components
 lib/
   firebase.ts                   → Firebase app initialization
   session.ts                    → Session CRUD operations
@@ -60,52 +82,23 @@ docs/
 6. **TypeScript strict** — all code must be properly typed, no `any` types
 7. **Server vs Client components** — use `'use client'` directive only when component needs browser APIs, hooks, state or event handlers
 
-## Post-Implementation Checklist
+# Scripts
 
-After implementing the requirement, perform all of the following steps:
-
-### 1. Run ESLint
+**Run ESLint**
 ```bash
 npm run lint
 ```
-Fix all linting errors before proceeding.
 
-### 2. Build the project
+**Build the project**
 ```bash
 npm run build
 ```
-Fix any build/type errors until the build succeeds.
-
-### 3. Run unit tests (if they exist)
+**Run unit tests**
 ```bash
 npm test
 ```
-If test scripts exist, run them and fix any failures.
 
-### 4. Validate UI design
-For any UI components created or modified:
-- Verify all colors use design system tokens from `docs/DESIGN_SYSTEM.md`
-- Verify spacing uses only xs/s/m/l/xl/xxl values
-- Verify typography follows the defined scale
-- Verify interactive elements have focus states (2px outline, `--color-focus-ring`)
-- Verify minimum 44px touch targets for buttons/inputs
-- Verify dark mode is the primary theme
-
-### 5. Mark task as completed
-
-Perform these three updates:
-
-**(a)** In the requirement file (`docs/stories/REQ-XXXX-*.md`), update the Status field:
-```
-**Status**: ✅ Completed
-```
-
-**(b)** Move the requirement file to the completed subfolder:
+**Move the requirement file to the completed subfolder**
 ```bash
 mv docs/stories/REQ-XXXX-*.md docs/stories/completed/
-```
-
-**(c)** In `docs/tasks.md`, update the task status from ⬜ or 🟨 to ✅:
-```
-| REQ-XXXX | Task description | ✅ |
 ```
