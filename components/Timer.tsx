@@ -62,7 +62,7 @@ export function Timer({ slotEndsAt, slotDurationSeconds }: TimerProps) {
       aria-live="polite"
       aria-label={ariaLabel}
       className={`
-        rounded-xl p-8 text-center transition-colors duration-300
+        rounded-xl p-4 sm:p-8 text-center transition-colors duration-300
         ${stateStyles[timerState]}
         ${timerState === 'expired' ? 'animate-pulse' : ''}
       `}
@@ -71,32 +71,32 @@ export function Timer({ slotEndsAt, slotDurationSeconds }: TimerProps) {
       {/* Expired State */}
       {timerState === 'expired' ? (
         <div>
-          <div className="text-[18px] font-medium leading-[1.4] uppercase tracking-wide">
+          <div className="text-[16px] sm:text-[18px] font-medium leading-[1.4] uppercase tracking-wide">
             ⏰ Time Expired
           </div>
-          <div className="mt-[var(--spacing-s)] text-[12px] leading-[1.4] opacity-90">
+          <div className="mt-[var(--spacing-s)] text-[11px] sm:text-[12px] leading-[1.4] opacity-90">
             Please end your slot to continue
           </div>
         </div>
       ) : timerState === 'overtime' ? (
         <div>
-          <div className="text-[12px] font-medium leading-[1.4] uppercase tracking-wide">
+          <div className="text-[11px] sm:text-[12px] font-medium leading-[1.4] uppercase tracking-wide">
             Over Time
           </div>
-          <div className="mt-[var(--spacing-s)] text-[64px] font-medium leading-[1.2] tabular-nums">
+          <div className="mt-[var(--spacing-s)] text-[48px] sm:text-[64px] font-medium leading-[1.2] tabular-nums">
             {formatOverTime(overTimeSeconds)}
           </div>
         </div>
       ) : (
         <>
           {/* Timer Display */}
-          <div className="text-[64px] font-medium leading-[1.2] tabular-nums">
+          <div className="text-[48px] sm:text-[64px] font-medium leading-[1.2] tabular-nums">
             {isActive ? (isNaN(remaining) ? '...' : formatTime(remaining)) : '—:——'}
           </div>
 
           {/* Status Label */}
           {timerState === 'warning' && (
-            <p className="mt-2 text-sm font-medium opacity-80">
+            <p className="mt-2 text-[12px] sm:text-sm font-medium opacity-80">
               Wrapping up...
             </p>
           )}

@@ -1,6 +1,6 @@
 # REQ-0025: Mobile-Responsive Layout Adjustments
 
-**Status**: 🟨 Requirements created  
+**Status**: ✅ Completed  
 **Priority**: Medium (UX polish)  
 **Dependencies**: REQ-0005 through REQ-0024
 
@@ -14,12 +14,12 @@ Ensure core pages and meeting UI components are readable and usable on small scr
 
 ## Acceptance Criteria
 
-- [ ] Home page layout stacks vertically on small screens with comfortable spacing.
-- [ ] Join page input and button fit within viewport without horizontal scrolling.
-- [ ] Meeting lobby view stacks participant list and controls for mobile.
-- [ ] Active meeting view keeps timer visible and controls reachable with one hand.
-- [ ] Participant list rows wrap gracefully with icons and status indicators.
-- [ ] All buttons have minimum tap target size of 44x44px.
+- [x] Home page layout stacks vertically on small screens with comfortable spacing.
+- [x] Join page input and button fit within viewport without horizontal scrolling.
+- [x] Meeting lobby view stacks participant list and controls for mobile.
+- [x] Active meeting view keeps timer visible and controls reachable with one hand.
+- [x] Participant list rows wrap gracefully with icons and status indicators.
+- [x] All buttons have minimum tap target size of 44x44px.
 
 ---
 

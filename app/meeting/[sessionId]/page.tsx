@@ -62,7 +62,7 @@ export default function MeetingPage() {
 
 function LoadingView() {
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] flex items-center justify-center p-[var(--spacing-m)]">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-[var(--color-border)] border-t-[var(--color-brand)] rounded-full animate-spin mx-auto mb-4" />
         <p className="text-[var(--color-text-secondary)]">Loading meeting...</p>
@@ -73,8 +73,8 @@ function LoadingView() {
 
 function ErrorView({ error }: { error: string }) {
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-[var(--color-surface-elevated)] rounded-lg p-8 border border-[var(--color-error)]">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] flex items-center justify-center p-[var(--spacing-m)]">
+      <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] rounded-lg p-[clamp(var(--spacing-l),5vw,var(--spacing-xl))] border border-[var(--color-error)]">
         <h1 className="text-[32px] font-medium leading-[1.3] mb-4 text-[var(--color-error)]">Error</h1>
         <p className="text-[var(--color-text-secondary)] mb-6">{error}</p>
         <Link
@@ -127,12 +127,12 @@ function LobbyView({
   }
 
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)]">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-[32px] font-medium leading-[1.3] mb-6">Meeting Lobby</h1>
+        <h1 className="text-[24px] sm:text-[32px] font-medium leading-[1.3] mb-[var(--spacing-m)] sm:mb-[var(--spacing-l)]">Meeting Lobby</h1>
 
         {/* Session Info */}
-        <div className="bg-[var(--color-surface-elevated)] rounded-lg p-6 mb-6 border border-[var(--color-border)]">
+        <div className="bg-[var(--color-surface-elevated)] rounded-lg p-[var(--spacing-m)] sm:p-[var(--spacing-l)] mb-[var(--spacing-m)] sm:mb-[var(--spacing-l)] border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] text-sm mb-1">
             Slot Duration
           </p>
@@ -142,15 +142,15 @@ function LobbyView({
         </div>
 
         {/* Share Link */}
-        <div className="bg-[var(--color-surface-elevated)] rounded-lg p-6 mb-6 border border-[var(--color-border)]">
+        <div className="bg-[var(--color-surface-elevated)] rounded-lg p-[var(--spacing-m)] sm:p-[var(--spacing-l)] mb-[var(--spacing-m)] sm:mb-[var(--spacing-l)] border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] text-sm mb-2">Share this link to invite participants:</p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 bg-[var(--color-surface)] px-3 py-2 rounded text-sm font-mono break-all">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <code className="flex-1 bg-[var(--color-surface)] px-3 py-2 rounded text-[12px] sm:text-sm font-mono break-all order-2 sm:order-1">
               {joinLink}
             </code>
             <button
               onClick={handleCopyLink}
-              className="px-4 py-2 bg-[var(--color-brand)] text-white rounded hover:bg-[var(--color-brand-hover)] transition-colors whitespace-nowrap"
+              className="h-11 px-4 sm:px-6 bg-[var(--color-brand)] text-white rounded hover:bg-[var(--color-brand-hover)] transition-colors font-medium text-sm order-1 sm:order-2 sm:whitespace-nowrap"
             >
               {isCopied ? 'Copied!' : 'Copy'}
             </button>
@@ -158,7 +158,7 @@ function LobbyView({
         </div>
 
         {/* Participants */}
-        <div className="bg-[var(--color-surface-elevated)] rounded-lg p-6 mb-6 border border-[var(--color-border)]">
+        <div className="bg-[var(--color-surface-elevated)] rounded-lg p-[var(--spacing-m)] sm:p-[var(--spacing-l)] mb-[var(--spacing-m)] sm:mb-[var(--spacing-l)] border border-[var(--color-border)]">
           <h2 className="text-lg font-medium mb-4">
             Participants ({participants.length})
           </h2>
@@ -168,11 +168,11 @@ function LobbyView({
                 key={id}
                 className="flex items-center gap-2 py-2 px-3 rounded bg-[var(--color-surface)]"
               >
-                <span className="text-[var(--color-text-primary)]">
+                <span className="text-[14px] leading-[1.5] text-[var(--color-text-primary)] truncate">
                   {participant.name}
                 </span>
                 {participant.role === 'host' && (
-                  <span className="text-xs bg-[var(--color-brand)] text-white px-2 py-0.5 rounded">
+                  <span className="text-xs bg-[var(--color-brand)] text-white px-2 py-0.5 rounded whitespace-nowrap">
                     Host
                   </span>
                 )}
@@ -220,11 +220,11 @@ function FinishedView({
 
   if (showSummary) {
     return (
-      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
+      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)]">
         <div className="max-w-2xl mx-auto">
           <MeetingSummary session={session} />
 
-          <div className="mt-[var(--spacing-l)] flex flex-col gap-[var(--spacing-s)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-[var(--spacing-l)] flex flex-col sm:flex-row gap-[var(--spacing-s)] sm:items-center sm:justify-between">
             {isHost && (
               <button
                 type="button"
@@ -248,8 +248,8 @@ function FinishedView({
   }
 
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4 flex items-center justify-center">
-      <div className="max-w-md w-full bg-[var(--color-surface-elevated)] rounded-lg p-8 border border-[var(--color-border)]">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] flex items-center justify-center">
+      <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] rounded-lg p-[clamp(var(--spacing-l),5vw,var(--spacing-xl))] border border-[var(--color-border)]">
         <h1 className="text-[32px] font-medium leading-[1.3] mb-4">Meeting Ended</h1>
         <p className="text-[var(--color-text-secondary)] mb-6">
           Thanks for participating! Here&apos;s who joined:
@@ -321,9 +321,9 @@ function ActiveMeetingView({
   }, [session.hostId])
 
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)]">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-[18px] font-medium leading-[1.4] text-[var(--color-text-secondary)] mb-6">
+        <h1 className="text-[18px] font-medium leading-[1.4] text-[var(--color-text-secondary)] mb-[var(--spacing-m)] sm:mb-[var(--spacing-l)]">
           Tick-Talk Meeting
         </h1>
 

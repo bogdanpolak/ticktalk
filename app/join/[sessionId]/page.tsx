@@ -68,7 +68,7 @@ export default function JoinPage() {
 
   if (authLoading || sessionLoading) {
     return (
-      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] flex items-center justify-center">
+      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] sm:p-[var(--spacing-xl)] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[var(--color-border)] border-t-[var(--color-brand)] rounded-full animate-spin mx-auto mb-[var(--spacing-m)]" />
           <p className="text-[14px] text-[var(--color-text-secondary)]">Loading session...</p>
@@ -79,8 +79,8 @@ export default function JoinPage() {
 
   if (!sessionId || sessionError || !session) {
     return (
-      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] flex items-center justify-center">
-        <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-md p-[var(--spacing-xl)]">
+      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] sm:p-[var(--spacing-xl)] flex items-center justify-center">
+        <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-md p-[clamp(var(--spacing-l),5vw,var(--spacing-xl))]">
           <h1 className="text-[32px] font-medium leading-[1.3] mb-[var(--spacing-s)]">Session Not Found</h1>
           <p className="text-[14px] text-[var(--color-text-secondary)] mb-[var(--spacing-l)]">
             The session you are trying to join does not exist or has expired.
@@ -98,8 +98,8 @@ export default function JoinPage() {
 
   if (session.status === 'finished') {
     return (
-      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] flex items-center justify-center">
-        <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-md p-[var(--spacing-xl)]">
+      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] sm:p-[var(--spacing-xl)] flex items-center justify-center">
+        <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-md p-[clamp(var(--spacing-l),5vw,var(--spacing-xl))]">
           <h1 className="text-[32px] font-medium leading-[1.3] mb-[var(--spacing-s)]">Meeting Ended</h1>
           <p className="text-[14px] text-[var(--color-text-secondary)] mb-[var(--spacing-l)]">
             This meeting has already ended and is no longer accepting participants.
@@ -116,14 +116,14 @@ export default function JoinPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] flex items-center justify-center">
-      <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-md p-[var(--spacing-xl)]">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-[var(--spacing-m)] sm:p-[var(--spacing-xl)] flex items-center justify-center">
+      <div className="w-full max-w-[400px] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-md p-[clamp(var(--spacing-l),5vw,var(--spacing-xl))]">
         <h1 className="text-[32px] font-medium leading-[1.3] mb-[var(--spacing-s)]">Tick-Talk</h1>
         <p className="text-[14px] text-[var(--color-text-secondary)] mb-[var(--spacing-l)]">Join a speaking meeting</p>
 
         <div className="mb-[var(--spacing-l)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-sm p-[var(--spacing-m)]">
           <p className="text-[11px] text-[var(--color-text-muted)] mb-[var(--spacing-xs)]">Session ID</p>
-          <p className="text-[14px] font-mono break-all text-[var(--color-text-primary)]">{sessionId}</p>
+          <p className="text-[12px] sm:text-[14px] font-mono break-all text-[var(--color-text-primary)]">{sessionId}</p>
         </div>
 
         <form onSubmit={handleJoin} className="flex flex-col gap-[var(--spacing-l)]">

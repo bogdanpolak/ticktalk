@@ -81,7 +81,7 @@ export default function HomePage() {
         background: 'var(--color-surface-elevated)',
         borderRadius: '8px',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.3)',
-        padding: 'var(--spacing-xl)'
+        padding: 'clamp(var(--spacing-l), 5vw, var(--spacing-xl))'
       }}>
         <h1 style={{
           fontSize: '32px',
@@ -127,7 +127,8 @@ export default function HomePage() {
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: 'var(--spacing-s) var(--spacing-m)',
+                padding: '10px var(--spacing-m)',
+                height: '44px',
                 border: `1px solid var(--color-border)`,
                 borderRadius: '0px',
                 fontSize: '14px',
@@ -169,7 +170,8 @@ export default function HomePage() {
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: 'var(--spacing-s) var(--spacing-m)',
+                padding: '10px var(--spacing-m)',
+                height: '44px',
                 border: `1px solid var(--color-border)`,
                 borderRadius: '0px',
                 fontSize: '14px',
@@ -227,8 +229,8 @@ export default function HomePage() {
               color: '#FFFFFF',
               fontWeight: 500,
               fontSize: '12px',
-              padding: 'var(--spacing-s) var(--spacing-m)',
-              height: '40px',
+              padding: '0 var(--spacing-m)',
+              height: '44px',
               border: 'none',
               borderRadius: '0px',
               cursor: isCreating || !name.trim() ? 'not-allowed' : 'pointer',
