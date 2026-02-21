@@ -1,6 +1,6 @@
 # Tick-Talk — Implementation Plan
 
-> Updated: February 2025
+> Updated: February 2026
 > Based on PRD + tech architecture decisions
 
 ---
@@ -42,12 +42,21 @@ sessions/{sessionId}: {
   status: "lobby" | "active" | "finished",
   activeSpeakerId: string | null,
   slotEndsAt: number | null,          // Unix timestamp (ms)
+  slotStartedAt: number | null,       // Unix timestamp (ms) when current speaker started
   spokenUserIds: string[],
   participants: {
     [userId]: {
       name: string,
       role: "host" | "participant",
-      isHandRaised: boolean
+      isHandRaised: boolean,
+      totalSpokeDurationSeconds: number,   // Cumulative across all rounds
+      speakingHistory: [
+        {
+          startTime: number,                // Unix timestamp (ms) when this slot started
+          endTime: number,                  // Unix timestamp (ms) when this slot ended
+          durationSeconds: number           // Calculated duration
+        }
+      ]
     }
   }
 }
@@ -57,8 +66,12 @@ sessions/{sessionId}: {
 
 - `spokenUserIds` tracks who has already spoken in the current round.
 - When all participants have spoken, `spokenUserIds` resets to empty.
-- `slotEndsAt` is authoritative — clients compute countdown locally.
-- Timer expiry shows an indicator but does NOT auto-advance. Speaker manually ends slot.
+- `slotEndsAt` is authoritative — clients compute countdown locally and display over-time if exceeded.
+- `slotStartedAt` marks when current speaker's slot began (set on speaker selection).
+- `totalSpokeDurationSeconds` accumulates across all rounds, never resets.
+- `speakingHistory` records each individual speak slot with start/end/duration for analytics.
+- Timer expiry shows an indicator but does NOT auto-advance; over-time display shows if speaker exceeds slot duration.
+- Speaker manually ends slot; system calculates actual duration and stores in history.
 
 ---
 
@@ -95,20 +108,31 @@ Single page with conditional rendering based on `session.status`:
 
 **Active state** (`status: "active"`):
 - Active speaker (highlighted, large)
-- Countdown timer (large, central)
-- "Time Expired" indicator when timer reaches 0
+- Countdown timer (large, central) with over-time display if speaker exceeds slot duration
+- "⏰ Time Expired" indicator when timer reaches 0, then switches to over-time display "+0:MM"
 - Participant list with:
   - ✋ Hand raised indicator
   - ✅ Already spoken indicator
   - 🎤 Currently speaking indicator
+  - 📊 Total speaking time per participant
 - Active speaker sees:
   - "End My Slot" button
   - Participant picker (only those who haven't spoken)
-- Host sees "End Meeting" button (only when no speaker is active)
+  - Cumulative speaking time display
+- Host sees:
+  - "End Meeting" button (always enabled)
+  - Same participant list as active speaker
+  - If clicking End Meeting with unspoken participants: warning dialog "X participants haven't spoken yet. End meeting anyway?"
 
-**Finished state** (`status: "finished"`):
-- Meeting complete message
-- Summary of participants
+**Finished state** (`status: "finished"`) or End Meeting clicked:
+- Meeting Summary view:
+  - List of all participants with:
+    - Name
+    - Total speaking time (cumulative)
+    - Over-time count (if applicable)
+    - Number of turns
+  - Red highlight for participants who exceeded `slotDurationSeconds` in any turn
+  - Host can close to return to active meeting or fully end session
 
 ---
 
@@ -153,7 +177,7 @@ All UI state derives from the Firebase session snapshot. No separate event syste
 
 ### 4.4 Speaker Selection
 
-When the active speaker (or host for the first speaker) selects the next speaker:
+When the active speaker (or host for any speaker, including themselves) selects the next speaker:
 
 ```ts
 runTransaction(ref(db, `sessions/${sessionId}`), (session) => {
@@ -162,6 +186,7 @@ runTransaction(ref(db, `sessions/${sessionId}`), (session) => {
   if (session.spokenUserIds?.includes(nextSpeakerId)) return
   
   session.activeSpeakerId = nextSpeakerId
+  session.slotStartedAt = Date.now()  // Mark start of this speaker's slot
   session.slotEndsAt = Date.now() + session.slotDurationSeconds * 1000
   session.spokenUserIds = [...(session.spokenUserIds || []), nextSpeakerId]
   
@@ -175,32 +200,64 @@ runTransaction(ref(db, `sessions/${sessionId}`), (session) => {
 })
 ```
 
-Transaction ensures only one concurrent selection succeeds.
+Transaction ensures only one concurrent selection succeeds. Host can select themselves or others.
 
 ### 4.5 End Slot
 
 ```ts
+const now = Date.now()
+const durationMs = now - session.slotStartedAt
+const durationSeconds = Math.round(durationMs / 1000)
+
+update(ref(db, `sessions/${sessionId}/participants/${activeSpeakerId}`), {
+  totalSpokeDurationSeconds: (participant.totalSpokeDurationSeconds || 0) + durationSeconds,
+  speakingHistory: [
+    ...participant.speakingHistory,
+    {
+      startTime: session.slotStartedAt,
+      endTime: now,
+      durationSeconds: durationSeconds
+    }
+  ]
+})
+
 update(ref(db, `sessions/${sessionId}`), {
   activeSpeakerId: null,
-  slotEndsAt: null
+  slotEndsAt: null,
+  slotStartedAt: null
 })
 ```
 
-After ending slot, the speaker selects the next participant (combined into one action for better UX — speaker picks next, which triggers 4.4).
+After ending slot, the speaker selects the next participant (combined into one action for better UX — speaker picks next, which triggers 4.4). System automatically calculates and stores actual duration in speaking history.
 
-### 4.6 Timer
+### 4.6 Timer Display
 
 Client-side countdown computed from `slotEndsAt`:
 
 ```ts
-const remaining = Math.max(0, Math.ceil((session.slotEndsAt - Date.now()) / 1000))
+const now = Date.now()
+const elapsed = now - session.slotStartedAt
+const remaining = (session.slotEndsAt - now) / 1000
+
+if (remaining > 0) {
+  // Show countdown: MM:SS
+  displayCountdown(Math.ceil(remaining))
+  // Color states: green → yellow (15s) → red (5s)
+} else if (remaining <= 0 && remaining > -0.5) {
+  // Show "Time Expired" indicator
+  displayExpired()
+} else {
+  // Show over-time: +M:SS format in red
+  displayOverTime(Math.abs(remaining))
+}
 ```
 
-- Tick locally every second via `setInterval`
-- Yellow warning at 15s remaining
-- Red warning at 5s remaining
-- "Time Expired" indicator when reaching 0
+- Tick locally every 100ms for smooth animation
+- **Countdown state**: Green → Yellow (≤15s) → Red (≤5s)
+- **Expired state**: Red pulse with "⏰ Time Expired" message when reaching 0
+- **Over-time state**: Switch to "+M:SS" format (e.g., "+1:45"), distinct red visual state when negative
 - No auto-advance — speaker stays active until they end their slot
+- Both countdown and over-time are computed and displayed client-side; cleared on slot end
 
 ### 4.7 Hand Raise
 
@@ -209,6 +266,42 @@ update(ref(db, `sessions/${sessionId}/participants/${userId}`), {
   isHandRaised: !currentState
 })
 ```
+
+### 4.8 End Meeting with Unspoken Warning
+
+When host clicks "End Meeting" button:
+
+```ts
+const spokenCount = session.spokenUserIds.length || 0
+const totalParticipants = Object.keys(session.participants).length
+const unspokenIds = Object.keys(session.participants).filter(
+  id => !session.spokenUserIds?.includes(id)
+)
+
+if (unspokenIds.length > 0) {
+  // Show confirmation dialog:
+  // "X participant(s) haven't spoken yet. End meeting anyway?"
+  // [Cancel] [End Meeting]
+  showConfirmDialog()
+} else {
+  // Immediately end meeting
+  endMeeting()
+}
+
+function endMeeting() {
+  update(ref(db, `sessions/${sessionId}`), {
+    status: 'finished',
+    activeSpeakerId: null,
+    slotEndsAt: null
+  })
+  // Display Meeting Summary view
+}
+```
+
+- "End Meeting" button is **always enabled** (even during active speaking)
+- Warning checks if there are participants who haven't spoken in current round
+- Dialog is dismissible; user can cancel or confirm
+- No override needed — all participants can see who hasn't spoken via indicators
 
 ---
 
@@ -243,32 +336,34 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 
 ---
 
-## 6. Component Breakdown
+## 7. Component Breakdown
 
 ```
 components/
-  Timer.tsx                → Countdown display with color states
-  ParticipantList.tsx      → List with status indicators
+  Timer.tsx                → Countdown + over-time display with color states
+  ParticipantList.tsx      → List with status + speaking time indicators
   ActiveSpeaker.tsx        → Highlighted current speaker display
-  SpeakerSelector.tsx      → Pick next speaker from eligible list
+  SpeakerSelector.tsx      → Pick next speaker from eligible list (host + active speaker)
   HandRaiseButton.tsx      → Toggle hand raise
-  LobbyView.tsx            → Pre-meeting waiting room
   MeetingControls.tsx      → Host/speaker action buttons
+  MeetingSummary.tsx       → Finished state view with speaking times + over-time highlight
+  EndMeetingDialog.tsx     → Confirmation modal for unspoken participants warning
+  LobbyView.tsx            → Pre-meeting waiting room
 
 lib/
   firebase.ts              → Firebase app initialization
-  session.ts               → Session CRUD operations
+  session.ts               → Session CRUD operations + time tracking helpers
   auth.ts                  → Anonymous auth helper
 
 hooks/
   useSession.ts            → Subscribe to session updates
-  useTimer.ts              → Local countdown logic
+  useTimer.ts              → Local countdown/over-time logic with display format
   useAuth.ts               → Current user identity
 ```
 
 ---
 
-## 7. Edge Cases
+## 8. Edge Cases
 
 | Case                          | Handling                                                   |
 | ----------------------------- | ---------------------------------------------------------- |
@@ -283,7 +378,7 @@ hooks/
 
 ---
 
-## 8. UX Polish
+## 9. UX Polish
 
 - 🔊 Sound notification when slot time expires
 - 🟡 Yellow timer background at ≤15s remaining
@@ -296,11 +391,11 @@ hooks/
 
 ---
 
-## 9. Implementation Tasks
+## 10. Implementation Tasks
 
 See [docs/tasks.md](tasks.md) for the complete task list with tracking and status updates.
 
-All 21 tasks must be completed to achieve a production-ready MVP.
+All 26 tasks must be completed to achieve a production-ready MVP.
 
 ---
 
@@ -328,13 +423,16 @@ All 21 tasks must be completed to achieve a production-ready MVP.
 
 ---
 
-## 10. Success Criteria
+## 13. Success Criteria
 
-At MVP completion (all 21 tasks marked ✅):
+At MVP completion (all 26 tasks marked ✅):
 
-- All core features functional (create, join, speak, timer, end meeting)
+- All core features functional (create, join, speak, timer with over-time, end meeting with warnings)
+- Speaking duration tracking and Meeting Summary view working
+- Host fully participates as speaker with same capabilities as participants
 - Firebase real-time sync working across participants
+- Over-time display and speaking time analytics working
 - Mobile-responsive UI with no critical layout issues
-- Edge cases handled (disconnects, concurrent actions)
+- Edge cases handled (disconnects, concurrent actions, over-time scenarios)
 - Sound notification on timer expiry
 - Code ready for internal team testing

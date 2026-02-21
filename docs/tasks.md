@@ -23,9 +23,14 @@
 | REQ-0017 | "Spoken" tracking and round reset logic | ✅ |
 | REQ-0018 | Disconnect handling (speaker & host) | ✅ |
 | REQ-0019 | Timer expired indicator + sound notification | ✅ |
-| REQ-0020 | Mobile-responsive layout adjustments | ⬜ |
-| REQ-0021 | Firebase security rules (basic) | ⬜ |
-| REQ-0022 | End-to-end testing & bug fixes | ⬜ |
+| REQ-0020 | Speaking duration tracking in Firebase | ⬜ |
+| REQ-0021 | Timer over-time display format (+M:SS) | ⬜ |
+| REQ-0022 | Host participates in speaker rotation | ⬜ |
+| REQ-0023 | Meeting Summary with speaking times | ⬜ |
+| REQ-0024 | End Meeting warning for unspoken users | ⬜ |
+| REQ-0025 | Mobile-responsive layout adjustments | ⬜ |
+| REQ-0026 | Firebase security rules (basic) | ⬜ |
+| REQ-0027 | End-to-end testing & bug fixes | ⬜ |
 
 **Status Symbols**
 
@@ -45,3 +50,41 @@
 - Update status as you progress on each task
 - Comment below each completed task with implementation details if needed
 - For blocked tasks, add notes in the relevant section
+
+---
+
+## Summary of New Requirements (REQ-0020 through REQ-0024)
+
+### REQ-0020: Speaking Duration Tracking in Firebase
+- Track `slotStartedAt` when speaker is selected
+- Calculate actual speaking duration when slot ends
+- Store in `speakingHistory` array with `startTime`, `endTime`, `durationSeconds`
+- Accumulate `totalSpokeDurationSeconds` per participant (never resets)
+- Implementation: Modify `lib/session.ts` end-slot logic and update Firebase schema
+
+### REQ-0021: Timer Over-Time Display Format
+- Extend Timer.tsx to display over-time as `+M:SS` (e.g., `+1:12`)
+- Switch format when `slotEndsAt < Date.now()`
+- Apply distinct visual state (red background) different from expired indicator
+- Update useTimer.ts to compute both countdown and over-time
+- Modify Timer color states to include new over-time state
+
+### REQ-0022: Host Participates in Speaker Rotation
+- Update SpeakerSelector.tsx logic to allow host selection (remove host from ineligibility check)
+- Host can select themselves as first speaker
+- Host appears in eligible next-speaker list if they haven't spoken in current round
+- Update speaker selection validation to include host in rotation
+
+### REQ-0023: Meeting Summary with Speaking Times
+- Create new MeetingSummary.tsx component
+- Display when `status: 'finished'` or when End Meeting is confirmed
+- Show: Name, Total Time Spoken, Over-time Flag (if exceeded slotDurationSeconds), Number of Turns
+- Highlight rows red if participant exceeded their slot duration in any turn
+- Allow host to close summary or return to active meeting view
+
+### REQ-0024: End Meeting Warning for Unspoken Users
+- Create EndMeetingDialog.tsx confirmation modal
+- Trigger when host clicks End Meeting with unspoken participants
+- Dialog: "X participant(s) haven't spoken yet. End meeting anyway?" with [Cancel] [End Meeting] buttons
+- Calculate unspoken: `participants not in spokenUserIds`
+- Make "End Meeting" button always enabled (remove speaker-active disabled state)
