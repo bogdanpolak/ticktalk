@@ -10,3 +10,6 @@ If no stories was provided as an input, create stories for 3 "Requirements neede
 Save each implementation story in a separate file in `/docs/stories` folder. 
 Check one of files stored there as an example, if theres any check completed folder: `/docs/stories/completed` for reference.
 After creation update tasks.md file and update requirements status as Requirements created
+
+At the end commit all changes in git with a message:
+Create stories: REQ-xxxx, REQ-yyyy, REQ-zzzz
