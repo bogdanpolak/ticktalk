@@ -9,6 +9,7 @@ interface MeetingControlsProps {
   activeSpeakerId: string | null
   hostId: string
   hasEligibleCandidates: boolean
+  onSlotEnded?: (speakerId: string | null) => void
 }
 
 export function MeetingControls({
@@ -16,7 +17,8 @@ export function MeetingControls({
   currentUserId,
   activeSpeakerId,
   hostId,
-  hasEligibleCandidates
+  hasEligibleCandidates,
+  onSlotEnded
 }: MeetingControlsProps) {
   const [isEnding, setIsEnding] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +33,7 @@ export function MeetingControls({
 
     try {
       await endCurrentSlot(sessionId)
+      onSlotEnded?.(currentUserId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to end slot')
       setIsEnding(false)

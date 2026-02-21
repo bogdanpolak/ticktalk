@@ -236,6 +236,7 @@ function ActiveMeetingView({
   sessionId: string
   userId: string | null
 }): React.ReactNode {
+  const [lastEndedSpeakerId, setLastEndedSpeakerId] = useState<string | null>(null)
   const isHost = userId === session.hostId
   const activeSpeakerName = session.activeSpeakerId
     ? session.participants[session.activeSpeakerId]?.name ?? 'Waiting for speaker'
@@ -250,13 +251,13 @@ function ActiveMeetingView({
         <div className="grid gap-[var(--spacing-l)] lg:grid-cols-[2fr_1fr]">
           <section className="space-y-[var(--spacing-l)]">
             <ActiveSpeaker
-              activeSpeakerId={session.activeSpeakerId}
+              activeSpeakerId={session.activeSpeakerId ?? null}
               activeSpeakerName={activeSpeakerName}
               currentUserId={userId}
             />
 
             <Timer
-              slotEndsAt={session.slotEndsAt}
+              slotEndsAt={session.slotEndsAt ?? null}
               slotDurationSeconds={session.slotDurationSeconds}
             />
 
@@ -270,6 +271,7 @@ function ActiveMeetingView({
                   participantId !== userId &&
                   !(session.spokenUserIds || []).includes(participantId)
               )}
+              onSlotEnded={setLastEndedSpeakerId}
             />
 
             <SpeakerSelector
@@ -277,8 +279,9 @@ function ActiveMeetingView({
               participants={session.participants}
               spokenUserIds={session.spokenUserIds || []}
               currentUserId={userId}
-              activeSpeakerId={session.activeSpeakerId}
+              activeSpeakerId={session.activeSpeakerId ?? null}
               isHost={isHost}
+              lastEndedSpeakerId={lastEndedSpeakerId}
             />
 
             {isHost && (

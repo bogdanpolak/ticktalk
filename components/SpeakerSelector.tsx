@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { selectNextSpeaker } from '@/lib/session'
 import type { Participant } from '@/lib/session'
 
@@ -11,6 +11,7 @@ interface SpeakerSelectorProps {
   currentUserId: string | null
   activeSpeakerId: string | null
   isHost: boolean
+  lastEndedSpeakerId?: string | null
 }
 
 interface CandidateEntry {
@@ -26,23 +27,17 @@ export function SpeakerSelector({
   spokenUserIds,
   currentUserId,
   activeSpeakerId,
-  isHost
+  isHost,
+  lastEndedSpeakerId
 }: SpeakerSelectorProps) {
   const [isSelecting, setIsSelecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const lastActiveSpeakerId = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (activeSpeakerId) {
-      lastActiveSpeakerId.current = activeSpeakerId
-    }
-  }, [activeSpeakerId])
 
   const isCurrentSpeaker = currentUserId === activeSpeakerId
   const noActiveSpeaker = !activeSpeakerId
   const canSelect =
     isCurrentSpeaker ||
-    (noActiveSpeaker && (isHost || currentUserId === lastActiveSpeakerId.current))
+    (noActiveSpeaker && (isHost || currentUserId === lastEndedSpeakerId))
 
   const candidates = useMemo<CandidateEntry[]>(() => {
     return Object.entries(participants)
