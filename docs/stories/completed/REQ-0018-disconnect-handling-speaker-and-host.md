@@ -1,6 +1,6 @@
 # REQ-0018: Disconnect Handling (Speaker & Host)
 
-**Status**: 🟨 Requirements Created  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Reliability & Edge Cases)  
 **Dependencies**: REQ-0007, REQ-0011, REQ-0014
 

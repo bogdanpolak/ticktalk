@@ -3,20 +3,30 @@
 import { useEffect, useState } from 'react'
 import { ref, onValue } from 'firebase/database'
 import { db } from '@/lib/firebase'
-import { Session } from '@/lib/session'
+import { Session, monitorPresence, promoteHostOnDisconnect } from '@/lib/session'
 
 interface SessionState {
   session: Session | null
   isLoading: boolean
   error?: string
+  speakerDisconnected: boolean
 }
 
-export function useSession(sessionId: string | null): SessionState {
+export function useSession(sessionId: string | null, userId: string | null = null): SessionState {
   const [state, setState] = useState<SessionState>({
     session: null,
     isLoading: true,
-    error: undefined
+    error: undefined,
+    speakerDisconnected: false
   })
+
+  // Set up presence monitoring for current user
+  useEffect(() => {
+    if (!sessionId || !userId) return
+
+    const cleanup = monitorPresence(sessionId, userId)
+    return cleanup
+  }, [sessionId, userId])
 
   useEffect(() => {
     // If no sessionId provided, reset state and early return
@@ -27,6 +37,7 @@ export function useSession(sessionId: string | null): SessionState {
     const sessionRef = ref(db, `sessions/${sessionId}`)
 
     let isCurrentSubscription = true
+    let prevHostId: string | null = null
 
     const unsubscribe = onValue(
       sessionRef,
@@ -34,15 +45,35 @@ export function useSession(sessionId: string | null): SessionState {
         if (!isCurrentSubscription) return
 
         if (snapshot.exists()) {
+          const session = snapshot.val() as Session
+          
+          // Check for host change (disconnect scenario)
+          if (prevHostId !== null && prevHostId !== session.hostId) {
+            // Host has changed - previous host likely disconnected
+            console.log('Host changed from', prevHostId, 'to', session.hostId)
+          }
+          prevHostId = session.hostId
+
+          // Check speaker presence
+          const activeSpeakerId = session.activeSpeakerId
+          let speakerDisconnected = false
+          
+          if (activeSpeakerId && session.presence) {
+            const speakerPresence = session.presence[activeSpeakerId]
+            speakerDisconnected = !speakerPresence || speakerPresence.status === 'offline'
+          }
+
           setState({
-            session: snapshot.val() as Session,
-            isLoading: false
+            session,
+            isLoading: false,
+            speakerDisconnected
           })
         } else {
           setState({
             session: null,
             isLoading: false,
-            error: 'Session not found'
+            error: 'Session not found',
+            speakerDisconnected: false
           })
         }
       },
@@ -52,17 +83,44 @@ export function useSession(sessionId: string | null): SessionState {
         setState({
           session: null,
           isLoading: false,
-          error: error.message
+          error: error.message,
+          speakerDisconnected: false
         })
       }
     )
+
+    // Monitor host presence and promote if disconnected
+    if (userId) {
+      const checkHostPresence = () => {
+        const snapshot = db.ref(`sessions/${sessionId}`)
+        onValue(snapshot, async (snap) => {
+          const session = snap.val() as Session
+          if (!session) return
+
+          const hostId = session.hostId
+          const hostPresence = session.presence?.[hostId]
+          
+          if (hostPresence && hostPresence.status === 'offline') {
+            // Host is offline, attempt promotion
+            try {
+              await promoteHostOnDisconnect(sessionId, hostId)
+            } catch (err) {
+              console.error('Failed to promote host:', err)
+            }
+          }
+        })
+      }
+      
+      // Initial check
+      checkHostPresence()
+    }
 
     // Cleanup listener on unmount or sessionId change
     return () => {
       isCurrentSubscription = false
       unsubscribe()
     }
-  }, [sessionId])
+  }, [sessionId, userId])
 
   return state
 }

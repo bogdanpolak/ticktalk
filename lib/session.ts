@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { ref, push, set, update, get, runTransaction } from 'firebase/database';
+import { ref, push, set, update, get, runTransaction, onDisconnect as onDisconnectRef, serverTimestamp } from 'firebase/database';
 
 // Types based on data model from plan
 export type SessionStatus = 'lobby' | 'active' | 'finished';
@@ -21,6 +21,14 @@ export interface Session {
   participants: {
     [userId: string]: Participant;
   };
+  presence?: {
+    [userId: string]: {
+      lastSeen: number;
+      status: 'online' | 'offline';
+    };
+  };
+  hostChangedAt?: number;
+  previousHostId?: string;
 }
 
 export interface SessionSummary {
@@ -267,4 +275,79 @@ export async function promoteToHost(
   
   // Update session hostId
   await updateSession(sessionId, { hostId: userId });
+}
+
+/**
+ * Monitor presence and set up disconnect cleanup
+ * Returns an unsubscribe function
+ */
+export function monitorPresence(
+  sessionId: string,
+  userId: string
+): () => void {
+  const presenceRef = ref(db, `sessions/${sessionId}/presence/${userId}`);
+  
+  // Set presence on connect
+  set(presenceRef, {
+    lastSeen: serverTimestamp(),
+    status: 'online'
+  });
+  
+  // On disconnect, remove presence
+  onDisconnectRef(presenceRef).remove();
+  
+  // Return cleanup function
+  return () => {
+    // Remove presence on manual cleanup
+    set(presenceRef, null);
+  };
+}
+
+/**
+ * Promote host automatically when current host disconnects
+ * Call this when host presence is lost
+ */
+export async function promoteHostOnDisconnect(
+  sessionId: string,
+  currentHostId: string
+): Promise<void> {
+  const sessionRef = ref(db, `sessions/${sessionId}`);
+  
+  await runTransaction(sessionRef, (session: Session | null) => {
+    if (!session) {
+      return undefined;
+    }
+    
+    // Verify host is still the one we think disconnected
+    if (session.hostId !== currentHostId) {
+      // Host already changed, do nothing
+      return session;
+    }
+    
+    const participants = session.participants || {};
+    
+    // Find first non-host participant (deterministic order)
+    const candidateIds = Object.keys(participants)
+      .filter(id => id !== currentHostId)
+      .sort(); // Alphabetical order for determinism
+    
+    if (candidateIds.length === 0) {
+      // No other participants, keep current host
+      return session;
+    }
+    
+    const newHostId = candidateIds[0];
+    
+    // Update participant role
+    if (session.participants[newHostId]) {
+      session.participants[newHostId].role = 'host';
+    }
+    session.hostId = newHostId;
+    
+    // Add log entry for debugging
+    session.hostChangedAt = Date.now();
+    session.previousHostId = currentHostId;
+    
+    return session;
+  });
 }

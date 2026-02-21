@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
@@ -18,7 +18,7 @@ export default function MeetingPage() {
   const params = useParams()
   const sessionId = params.sessionId as string
   const { userId, isLoading: authLoading } = useAuth()
-  const { session, isLoading: sessionLoading, error: sessionError } = useSession(sessionId)
+  const { session, isLoading: sessionLoading, error: sessionError, speakerDisconnected } = useSession(sessionId, userId)
 
   if (authLoading || sessionLoading) {
     return <LoadingView />
@@ -43,6 +43,7 @@ export default function MeetingPage() {
           session={session}
           sessionId={sessionId}
           userId={userId}
+          speakerDisconnected={speakerDisconnected}
         />
       )
     case 'finished':
@@ -231,13 +232,18 @@ function FinishedView({ session }: { session: Session }) {
 function ActiveMeetingView({
   session,
   sessionId,
-  userId
+  userId,
+  speakerDisconnected
 }: {
   session: Session
   sessionId: string
   userId: string | null
+  speakerDisconnected: boolean
 }): React.ReactNode {
   const [lastEndedSpeakerId, setLastEndedSpeakerId] = useState<string | null>(null)
+  const [showHostPromotion, setShowHostPromotion] = useState(false)
+  const prevHostIdRef = useRef<string>(session.hostId)
+  
   const isHost = userId === session.hostId
   const activeSpeakerName = session.activeSpeakerId
     ? session.participants[session.activeSpeakerId]?.name ?? 'Waiting for speaker'
@@ -246,12 +252,47 @@ function ActiveMeetingView({
   const isHandRaised = currentParticipant?.isHandRaised ?? false
   const isActiveSpeaker = userId === session.activeSpeakerId
 
+  // Monitor for host changes
+  useEffect(() => {
+    const prevHostId = prevHostIdRef.current
+    if (prevHostId !== session.hostId) {
+      // Host changed, show notification
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowHostPromotion(true)
+      const timer = setTimeout(() => setShowHostPromotion(false), 10000)
+      prevHostIdRef.current = session.hostId
+      return () => clearTimeout(timer)
+    }
+  }, [session.hostId])
+
   return (
     <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-[18px] font-medium leading-[1.4] text-[var(--color-text-secondary)] mb-6">
           Tick-Talk Meeting
         </h1>
+
+        {/* Speaker Disconnect Warning */}
+        {speakerDisconnected && isHost && session.activeSpeakerId && (
+          <div className="mb-[var(--spacing-l)] rounded-[8px] border-l-4 border-[var(--color-error)] bg-[var(--color-error)]/10 p-[var(--spacing-l)]">
+            <h3 className="text-[14px] leading-normal font-medium text-[var(--color-text-primary)]">
+              Active Speaker Disconnected
+            </h3>
+            <p className="mt-[var(--spacing-xs)] text-[12px] leading-[1.4] text-[var(--color-text-secondary)]">
+              {session.participants[session.activeSpeakerId]?.name || 'Speaker'} has lost connection. Please select a replacement speaker from the list below.
+            </p>
+          </div>
+        )}
+
+        {/* Host Role Change Notification */}
+        {showHostPromotion && (
+          <div className="mb-[var(--spacing-l)] rounded-[8px] border-l-4 border-[var(--color-brand)] bg-[var(--color-brand)]/10 p-[var(--spacing-l)]">
+            <p className="text-[12px] leading-[1.4] text-[var(--color-text-secondary)]">
+              <strong className="text-[var(--color-text-primary)]">{session.participants[session.hostId]?.name || 'A participant'}</strong> is now the host. The previous host has disconnected.
+            </p>
+          </div>
+        )}
+
         <div className="grid gap-[var(--spacing-l)] lg:grid-cols-[2fr_1fr]">
           <section className="space-y-[var(--spacing-l)]">
             <ActiveSpeaker

@@ -21,7 +21,7 @@
 | REQ-0015 | UI Polish — Idle state messaging and edge case handling (extra) | ✅ |
 | REQ-0016 | Hand raise toggle + visual indicator | ✅ |
 | REQ-0017 | "Spoken" tracking and round reset logic | ✅ |
-| REQ-0018 | Disconnect handling (speaker & host) | 🟨 |
+| REQ-0018 | Disconnect handling (speaker & host) | ✅ |
 | REQ-0019 | Timer expired indicator + sound notification | 🟨 |
 | REQ-0020 | Mobile-responsive layout adjustments | ⬜ |
 | REQ-0021 | Firebase security rules (basic) | ⬜ |
