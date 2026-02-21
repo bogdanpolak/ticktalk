@@ -1,6 +1,6 @@
 # REQ-0012: End Slot + Select Next Speaker Flow
 
-**Status**: ⬜ Not Started  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Core Flow)  
 **Dependencies**: REQ-0007, REQ-0011
 

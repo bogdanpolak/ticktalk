@@ -1,50 +1,16 @@
-'use client'
-
-import { useState } from 'react'
-import { endCurrentSlot, endMeeting } from '@/lib/session'
-
 interface ActiveSpeakerProps {
   activeSpeakerId: string | null
   activeSpeakerName: string | null
   currentUserId: string | null
-  isHost: boolean
-  sessionId: string
-  sessionStatus: 'lobby' | 'active' | 'finished'
 }
 
 export function ActiveSpeaker({
   activeSpeakerId,
   activeSpeakerName,
-  currentUserId,
-  isHost,
-  sessionId,
-  sessionStatus
+  currentUserId
 }: ActiveSpeakerProps) {
-  const [isEnding, setIsEnding] = useState(false)
   const isCurrentSpeaker = currentUserId === activeSpeakerId
   const hasSpeaker = activeSpeakerId !== null
-
-  const handleEndSlot = async () => {
-    setIsEnding(true)
-    try {
-      await endCurrentSlot(sessionId)
-    } catch (err) {
-      console.error('Failed to end slot:', err)
-    } finally {
-      setIsEnding(false)
-    }
-  }
-
-  const handleEndMeeting = async () => {
-    setIsEnding(true)
-    try {
-      await endMeeting(sessionId)
-    } catch (err) {
-      console.error('Failed to end meeting:', err)
-    } finally {
-      setIsEnding(false)
-    }
-  }
 
   if (!hasSpeaker) {
     return (
@@ -53,21 +19,8 @@ export function ActiveSpeaker({
           No active speaker
         </p>
         <p className="text-[14px] leading-[1.5] text-[var(--color-text-secondary)]">
-          {isHost
-            ? 'Select the first speaker to begin'
-            : 'Waiting for speaker selection...'}
+          {isCurrentSpeaker ? 'You are next to pick a speaker.' : 'Waiting for speaker selection...'}
         </p>
-
-        {isHost && sessionStatus === 'active' && (
-          <button
-            type="button"
-            onClick={handleEndMeeting}
-            disabled={isEnding}
-            className="mt-[var(--spacing-l)] h-11 px-[var(--spacing-m)] bg-[var(--color-error)] text-[var(--color-surface)] text-[12px] font-medium rounded-[0px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
-          >
-            {isEnding ? 'Ending...' : 'End Meeting'}
-          </button>
-        )}
       </section>
     )
   }
@@ -81,17 +34,6 @@ export function ActiveSpeaker({
       <p className="text-[12px] font-medium text-[var(--color-brand)] mb-[var(--spacing-l)]">
         Currently Speaking
       </p>
-
-      {isCurrentSpeaker && (
-        <button
-          type="button"
-          onClick={handleEndSlot}
-          disabled={isEnding}
-          className="h-11 px-[var(--spacing-l)] bg-[var(--color-warning)] text-[var(--color-surface)] text-[12px] font-medium rounded-[0px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
-        >
-          {isEnding ? 'Ending...' : 'End My Slot'}
-        </button>
-      )}
     </section>
   )
 }

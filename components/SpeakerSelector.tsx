@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { selectNextSpeaker } from '@/lib/session'
 import type { Participant } from '@/lib/session'
 
@@ -30,10 +30,19 @@ export function SpeakerSelector({
 }: SpeakerSelectorProps) {
   const [isSelecting, setIsSelecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const lastActiveSpeakerId = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (activeSpeakerId) {
+      lastActiveSpeakerId.current = activeSpeakerId
+    }
+  }, [activeSpeakerId])
 
   const isCurrentSpeaker = currentUserId === activeSpeakerId
   const noActiveSpeaker = !activeSpeakerId
-  const canSelect = isCurrentSpeaker || (isHost && noActiveSpeaker)
+  const canSelect =
+    isCurrentSpeaker ||
+    (noActiveSpeaker && (isHost || currentUserId === lastActiveSpeakerId.current))
 
   const candidates = useMemo<CandidateEntry[]>(() => {
     return Object.entries(participants)
@@ -47,8 +56,6 @@ export function SpeakerSelector({
       .sort((a, b) => {
         if (a.isHandRaised && !b.isHandRaised) return -1
         if (!a.isHandRaised && b.isHandRaised) return 1
-        if (!a.hasSpoken && b.hasSpoken) return -1
-        if (a.hasSpoken && !b.hasSpoken) return 1
         return a.name.localeCompare(b.name)
       })
   }, [participants, currentUserId, spokenUserIds])
@@ -57,7 +64,8 @@ export function SpeakerSelector({
     return null
   }
 
-  const eligibleCount = candidates.filter(candidate => !candidate.hasSpoken).length
+  const eligibleCandidates = candidates.filter(candidate => !candidate.hasSpoken)
+  const eligibleCount = eligibleCandidates.length
 
   const handleSelect = async (nextSpeakerId: string) => {
     setError(null)
@@ -72,62 +80,55 @@ export function SpeakerSelector({
   }
 
   return (
-    <section className="bg-(--color-surface-elevated) border border-(--color-border) rounded-lg p-4 sm:p-6">
-      <h2 className="text-[18px] leading-[1.4] font-medium text-(--color-text-primary)">
+    <section className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-[8px] p-[var(--spacing-l)]">
+      <h2 className="text-[18px] leading-[1.4] font-medium text-[var(--color-text-primary)]">
         Select Next Speaker
       </h2>
-      <p className="mt-1 text-[14px] leading-normal text-(--color-text-secondary)">
+      <p className="mt-[var(--spacing-xs)] text-[14px] leading-normal text-[var(--color-text-secondary)]">
         {eligibleCount} participant{eligibleCount !== 1 ? 's' : ''} remaining in this round
       </p>
 
       {error && (
-        <div className="mt-4 border border-(--color-error) bg-(--color-error)/10 rounded-sm p-3 text-[14px] leading-normal text-(--color-error)">
+        <div className="mt-[var(--spacing-m)] border border-[var(--color-error)] bg-[var(--color-error)]/10 rounded-[4px] p-[var(--spacing-s)] text-[14px] leading-normal text-[var(--color-error)]">
           {error}
         </div>
       )}
 
-      {candidates.length === 0 ? (
-        <p className="mt-4 text-[14px] leading-normal text-(--color-text-muted)">
-          No other participants in the session
+      {eligibleCandidates.length === 0 ? (
+        <p className="mt-[var(--spacing-m)] text-[14px] leading-normal text-[var(--color-text-muted)]">
+          {candidates.length === 0
+            ? 'No other participants in the session'
+            : 'No eligible participants remaining in this round'}
         </p>
       ) : (
-        <ul className="mt-4 space-y-2">
-          {candidates.map(candidate => {
-            const isEligible = !candidate.hasSpoken
-
+        <ul className="mt-[var(--spacing-m)] space-y-[var(--spacing-s)]">
+          {eligibleCandidates.map(candidate => {
             return (
               <li key={candidate.userId}>
                 <button
                   onClick={() => handleSelect(candidate.userId)}
-                  disabled={!isEligible || isSelecting}
+                  disabled={isSelecting}
                   className={[
-                    'w-full min-h-11 px-4 py-3 flex items-center justify-between text-left rounded-lg border transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-(--color-focus-ring) focus-visible:outline-offset-0',
-                    isEligible
-                      ? 'bg-(--color-surface) hover:bg-(--color-surface-subtle) border-(--color-border) cursor-pointer'
-                      : 'bg-(--color-surface) border-(--color-border) opacity-50 cursor-not-allowed',
-                    candidate.isHandRaised && isEligible ? 'border-(--color-warning)' : ''
+                    'w-full min-h-11 px-[var(--spacing-m)] py-[var(--spacing-s)] flex items-center justify-between text-left rounded-[8px] border transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0',
+                    'bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)] border-[var(--color-border)] cursor-pointer',
+                    candidate.isHandRaised ? 'border-[var(--color-warning)]' : ''
                   ].join(' ')}
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-[18px] leading-[1.4]" aria-hidden="true">
-                      {candidate.hasSpoken ? '✅' : candidate.isHandRaised ? '✋' : '👤'}
+                      {candidate.isHandRaised ? '✋' : '👤'}
                     </span>
                     <span
                       className={[
-                        'text-[14px] leading-normal font-normal',
-                        isEligible ? 'text-(--color-text-primary)' : 'text-(--color-text-muted)'
+                        'text-[14px] leading-normal font-normal text-[var(--color-text-primary)]'
                       ].join(' ')}
                     >
                       {candidate.name}
                     </span>
                   </span>
 
-                  <span className="text-[11px] leading-[1.4] text-(--color-text-muted)">
-                    {candidate.hasSpoken
-                      ? 'Already spoken'
-                      : isSelecting
-                        ? 'Selecting...'
-                        : 'Tap to select'}
+                  <span className="text-[11px] leading-[1.4] text-[var(--color-text-muted)]">
+                    {isSelecting ? 'Selecting...' : 'Tap to select'}
                   </span>
                 </button>
               </li>

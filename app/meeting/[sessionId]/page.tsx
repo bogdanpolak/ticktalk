@@ -8,6 +8,7 @@ import { useSession } from '@/app/hooks/useSession'
 import { startMeeting } from '@/lib/session'
 import { ActiveSpeaker } from '@/components/ActiveSpeaker'
 import { Timer } from '@/components/Timer'
+import { MeetingControls } from '@/components/MeetingControls'
 import { SpeakerSelector } from '@/components/SpeakerSelector'
 import type { Session } from '@/lib/session'
 
@@ -236,17 +237,12 @@ function ActiveMeetingView({
         <h1 className="text-[18px] font-medium leading-[1.4] text-[var(--color-text-secondary)] mb-6">
           Tick-Talk Meeting
         </h1>
-
         <ActiveSpeaker
           activeSpeakerId={session.activeSpeakerId}
           activeSpeakerName={activeSpeakerName}
           currentUserId={userId}
-          isHost={isHost}
-          sessionId={sessionId}
-          sessionStatus={session.status}
         />
 
-        {/* Timer — REQ-0009 */}
         <div className="mt-6">
           <Timer
             slotEndsAt={session.slotEndsAt}
@@ -254,8 +250,18 @@ function ActiveMeetingView({
           />
         </div>
 
-        {/* Participant List — REQ-0013 */}
-        {/* Speaker Selector — REQ-0011 */}
+        <MeetingControls
+          sessionId={sessionId}
+          currentUserId={userId}
+          activeSpeakerId={session.activeSpeakerId ?? null}
+          hostId={session.hostId}
+          hasEligibleCandidates={Object.entries(session.participants).some(
+            ([participantId]) =>
+              participantId !== userId &&
+              !(session.spokenUserIds || []).includes(participantId)
+          )}
+        />
+
         <div className="mt-6">
           <SpeakerSelector
             sessionId={sessionId}
