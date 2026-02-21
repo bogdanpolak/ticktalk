@@ -313,7 +313,6 @@ function ActiveMeetingView({
               hostId={session.hostId}
               hasEligibleCandidates={Object.entries(session.participants).some(
                 ([participantId]) =>
-                  participantId !== userId &&
                   !(session.spokenUserIds || []).includes(participantId)
               )}
               onSlotEnded={setLastEndedSpeakerId}
@@ -367,7 +366,6 @@ function HostEndMeetingControl({
 }) {
   const [isEnding, setIsEnding] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const isBlocked = activeSpeakerId !== null
 
   const handleEndMeeting = async () => {
     setError(null)
@@ -386,17 +384,11 @@ function HostEndMeetingControl({
         <button
           type="button"
           onClick={handleEndMeeting}
-          disabled={isEnding || isBlocked}
+          disabled={isEnding}
           className="h-11 px-[var(--spacing-m)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-surface-subtle)] active:bg-[var(--color-surface-subtle)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
         >
-          {isEnding ? 'Ending...' : 'End Meeting'}
+          {isEnding ? 'Ending...' : activeSpeakerId ? 'End Meeting (Speaker Active)' : 'End Meeting'}
         </button>
-
-        {isBlocked && (
-          <p className="text-[12px] leading-[1.4] text-[var(--color-text-muted)]">
-            End meeting is available when no speaker is active.
-          </p>
-        )}
 
         {error && (
           <p className="text-[12px] leading-[1.4] text-[var(--color-error)]">

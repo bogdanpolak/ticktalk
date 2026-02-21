@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ref, onValue } from 'firebase/database'
 import { db } from '@/lib/firebase'
-import { Session, monitorPresence, promoteHostOnDisconnect } from '@/lib/session'
+import { Session, monitorPresence } from '@/lib/session'
 
 interface SessionState {
   session: Session | null

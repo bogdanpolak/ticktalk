@@ -17,6 +17,7 @@ interface SpeakerSelectorProps {
 interface CandidateEntry {
   userId: string
   name: string
+  role: 'host' | 'participant'
   isHandRaised: boolean
   hasSpoken: boolean
 }
@@ -41,10 +42,10 @@ export function SpeakerSelector({
 
   const candidates = useMemo<CandidateEntry[]>(() => {
     return Object.entries(participants)
-      .filter(([id]) => id !== currentUserId)
       .map(([userId, participant]) => ({
         userId,
         name: participant.name,
+        role: participant.role,
         isHandRaised: participant.isHandRaised,
         hasSpoken: spokenUserIds.includes(userId)
       }))
@@ -53,7 +54,7 @@ export function SpeakerSelector({
         if (!a.isHandRaised && b.isHandRaised) return 1
         return a.name.localeCompare(b.name)
       })
-  }, [participants, currentUserId, spokenUserIds])
+  }, [participants, spokenUserIds])
 
   if (!canSelect) {
     return null
@@ -129,6 +130,11 @@ export function SpeakerSelector({
                     >
                       {candidate.name}
                     </span>
+                    {candidate.role === 'host' && (
+                      <span className="text-[11px] leading-[1.4] px-[var(--spacing-xs)] py-[var(--spacing-xs)] rounded-[4px] border border-[var(--color-brand)] text-[var(--color-brand)] bg-[var(--color-brand-subtle)]">
+                        Host
+                      </span>
+                    )}
                   </span>
 
                   <span className="text-[11px] leading-[1.4] text-[var(--color-text-muted)]">
