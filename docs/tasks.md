@@ -24,7 +24,7 @@
 | REQ-0018 | Disconnect handling (speaker & host) | ✅ |
 | REQ-0019 | Timer expired indicator + sound notification | ✅ |
 | REQ-0020 | Speaking duration tracking in Firebase | ✅ |
-| REQ-0021 | Timer over-time display format (+M:SS) | 🟨 |
+| REQ-0021 | Timer over-time display format (+M:SS) | ✅ |
 | REQ-0022 | Host participates in speaker rotation | 🟨 |
 | REQ-0023 | Meeting Summary with speaking times | ⬜ |
 | REQ-0024 | End Meeting warning for unspoken users | ⬜ |

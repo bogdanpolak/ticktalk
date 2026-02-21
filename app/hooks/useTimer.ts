@@ -7,11 +7,13 @@ interface TimerState {
   remaining: number
   isExpired: boolean
   isActive: boolean
+  isOverTime: boolean
+  overTimeSeconds: number
 }
 
 function computeRemaining(slotEndsAt: number | null): number {
   if (slotEndsAt === null) return 0
-  return Math.max(0, Math.ceil((slotEndsAt - Date.now()) / 1000))
+  return Math.ceil((slotEndsAt - Date.now()) / 1000)
 }
 
 export function useTimer(slotEndsAt: number | null): TimerState {
@@ -28,15 +30,12 @@ export function useTimer(slotEndsAt: number | null): TimerState {
       return
     }
 
-    // If already expired, no need to tick
     const initial = computeRemaining(slotEndsAt)
-    if (initial <= 0) {
-      setRemaining(0)
-      if (!hasPlayedSound) {
-        playTimerExpiredSound()
-        setHasPlayedSound(true)
-      }
-      return
+    setRemaining(initial)
+
+    if (initial <= 0 && !hasPlayedSound) {
+      playTimerExpiredSound()
+      setHasPlayedSound(true)
     }
 
     const intervalId = setInterval(() => {
@@ -47,12 +46,6 @@ export function useTimer(slotEndsAt: number | null): TimerState {
       if (newRemaining <= 0 && !hasPlayedSound) {
         playTimerExpiredSound()
         setHasPlayedSound(true)
-        clearInterval(intervalId)
-      }
-
-      // Stop ticking once expired
-      if (newRemaining <= 0) {
-        clearInterval(intervalId)
       }
     }, 1000)
 
@@ -74,6 +67,8 @@ export function useTimer(slotEndsAt: number | null): TimerState {
 
   const isActive = slotEndsAt !== null
   const isExpired = isActive && remaining <= 0
+  const isOverTime = isActive && remaining < 0
+  const overTimeSeconds = isOverTime ? Math.abs(remaining) : 0
 
-  return { remaining, isExpired, isActive }
+  return { remaining, isExpired, isActive, isOverTime, overTimeSeconds }
 }
