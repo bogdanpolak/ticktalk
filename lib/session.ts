@@ -210,10 +210,10 @@ export async function selectNextSpeaker(
       );
     }
     
-    // Validate: nextSpeakerId hasn't already spoken in current round
+    // Validation: speaker hasn't already spoken in the session (no reset allowed)
     if (spokenUserIds.includes(nextSpeakerId)) {
       throw new Error(
-        `Participant ${nextSpeakerId} has already spoken this round`
+        `Participant ${nextSpeakerId} has already spoken in this session`
       );
     }
     
@@ -223,18 +223,9 @@ export async function selectNextSpeaker(
     session.slotStartedAt = now;
     session.slotEndsAt = now + session.slotDurationSeconds * 1000;
     
-    // Add to spoken list
+    // Add to spoken list (no reset - single-turn session)
     const updatedSpokenUserIds = [...spokenUserIds, nextSpeakerId];
-    
-    // Check if all participants have spoken
-    const participantIds = Object.keys(participants);
-    const allHaveSpoken = updatedSpokenUserIds.length >= participantIds.length;
-    
-    // Reset if needed
-    const finalSpokenUserIds = allHaveSpoken ? [] : updatedSpokenUserIds;
-    
-    // Update session
-    session.spokenUserIds = finalSpokenUserIds;
+    session.spokenUserIds = updatedSpokenUserIds;
     
     return session;
   });

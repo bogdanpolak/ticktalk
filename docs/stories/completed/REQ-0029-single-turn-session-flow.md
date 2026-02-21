@@ -1,6 +1,6 @@
 # REQ-0029: Single-Turn Session Flow (No Reset)
 
-**Status**: 🟨 Requirements created  
+**Status**: ✅ Completed  
 **Priority**: High (Core Session Mechanic Change)  
 **Dependencies**: REQ-0011, REQ-0012, REQ-0017
 

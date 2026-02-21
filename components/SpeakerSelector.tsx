@@ -82,7 +82,7 @@ export function SpeakerSelector({
         Select Next Speaker
       </h2>
       <p className="mt-[var(--spacing-xs)] text-[14px] leading-normal text-[var(--color-text-secondary)]">
-        {eligibleCount} participant{eligibleCount !== 1 ? 's' : ''} remaining in this round
+        {eligibleCount} participant{eligibleCount !== 1 ? 's' : ''} remaining
       </p>
 
       {error && (
@@ -97,12 +97,12 @@ export function SpeakerSelector({
             No other participants in the session
           </p>
         ) : (
-          <div className="mt-[var(--spacing-m)] rounded-[8px] border-l-4 border-[var(--color-warning)] bg-[var(--color-warning)]/10 p-[var(--spacing-m)]">
+          <div className="mt-[var(--spacing-m)] rounded-[8px] border-l-4 border-[var(--color-brand)] bg-[var(--color-brand)]/10 p-[var(--spacing-m)]">
             <p className="text-[14px] leading-normal font-medium text-[var(--color-text-primary)]">
-              Round Complete
+              All participants have spoken.
             </p>
             <p className="mt-[var(--spacing-xs)] text-[12px] leading-[1.4] text-[var(--color-text-secondary)]">
-              All participants have spoken. The next speaker will start a new round.
+              Host can end the meeting.
             </p>
           </div>
         )
