@@ -12,6 +12,7 @@ import { MeetingControls } from '@/components/MeetingControls'
 import { ParticipantList } from '@/components/ParticipantList'
 import { SpeakerSelector } from '@/components/SpeakerSelector'
 import { HandRaiseButton } from '@/components/HandRaiseButton'
+import { MeetingSummary } from '@/components/MeetingSummary'
 import type { Session } from '@/lib/session'
 
 export default function MeetingPage() {
@@ -47,7 +48,12 @@ export default function MeetingPage() {
         />
       )
     case 'finished':
-      return <FinishedView session={session} />
+      return (
+        <FinishedView
+          session={session}
+          userId={userId}
+        />
+      )
     default:
       return <ErrorView error="Unknown session status" />
   }
@@ -200,8 +206,45 @@ function LobbyView({
   )
 }
 
-function FinishedView({ session }: { session: Session }) {
+function FinishedView({
+  session,
+  userId
+}: {
+  session: Session
+  userId: string | null
+}) {
   const participants = Object.entries(session.participants)
+  const isHost = userId === session.hostId
+  const [showSummary, setShowSummary] = useState(true)
+
+  if (showSummary) {
+    return (
+      <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
+        <div className="max-w-2xl mx-auto">
+          <MeetingSummary session={session} />
+
+          <div className="mt-[var(--spacing-l)] flex flex-col gap-[var(--spacing-s)] sm:flex-row sm:items-center sm:justify-between">
+            {isHost && (
+              <button
+                type="button"
+                onClick={() => setShowSummary(false)}
+                className="h-11 px-[var(--spacing-m)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-surface-subtle)] active:bg-[var(--color-surface-subtle)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
+              >
+                Close Summary
+              </button>
+            )}
+
+            <Link
+              href="/"
+              className="h-11 px-[var(--spacing-m)] inline-flex items-center justify-center bg-[var(--color-brand)] text-[var(--color-surface)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-active)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
+            >
+              Start a New Meeting
+            </Link>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4 flex items-center justify-center">
@@ -218,12 +261,23 @@ function FinishedView({ session }: { session: Session }) {
             </li>
           ))}
         </ul>
-        <Link
-          href="/"
-          className="block text-center bg-[var(--color-brand)] text-white font-medium py-3 rounded-lg hover:bg-[var(--color-brand-hover)] transition-colors"
-        >
-          Start a New Meeting
-        </Link>
+        <div className="flex flex-col gap-[var(--spacing-s)]">
+          {isHost && (
+            <button
+              type="button"
+              onClick={() => setShowSummary(true)}
+              className="h-11 px-[var(--spacing-m)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-surface-subtle)] active:bg-[var(--color-surface-subtle)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
+            >
+              View Summary
+            </button>
+          )}
+          <Link
+            href="/"
+            className="h-11 px-[var(--spacing-m)] inline-flex items-center justify-center bg-[var(--color-brand)] text-[var(--color-surface)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-active)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
+          >
+            Start a New Meeting
+          </Link>
+        </div>
       </div>
     </main>
   )

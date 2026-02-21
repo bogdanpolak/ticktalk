@@ -26,7 +26,7 @@
 | REQ-0020 | Speaking duration tracking in Firebase | ✅ |
 | REQ-0021 | Timer over-time display format (+M:SS) | ✅ |
 | REQ-0022 | Host participates in speaker rotation | ✅ |
-| REQ-0023 | Meeting Summary with speaking times | 🟨 |
+| REQ-0023 | Meeting Summary with speaking times | ✅ |
 | REQ-0024 | End Meeting warning for unspoken users | 🟨 |
 | REQ-0025 | Mobile-responsive layout adjustments | 🟨 |
 | REQ-0026 | Firebase security rules (basic) | ⬜ |

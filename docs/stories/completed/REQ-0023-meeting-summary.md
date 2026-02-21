@@ -1,6 +1,6 @@
 # REQ-0023: Meeting Summary with Speaking Times
 
-**Status**: 🟨 Requirements created  
+**Status**: ✅ Completed  
 **Priority**: Medium (Post-meeting)  
 **Dependencies**: REQ-0020, REQ-0021
 
