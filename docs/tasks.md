@@ -18,21 +18,25 @@
 | REQ-0012 | End slot + select next speaker flow | 🟨 |
 | REQ-0013 | Participant list with status indicators | 🟨 |
 | REQ-0014 | Host "Start Meeting" + "End Meeting" controls | 🟨 |
-| REQ-0015 | Hand raise toggle + visual indicator | ⬜ |
-| REQ-0016 | "Spoken" tracking and round reset logic | ⬜ |
-| REQ-0017 | Disconnect handling (speaker & host) | ⬜ |
-| REQ-0018 | Timer expired indicator + sound notification | ⬜ |
-| REQ-0019 | Mobile-responsive layout adjustments | ⬜ |
-| REQ-0020 | Firebase security rules (basic) | ⬜ |
-| REQ-0021 | End-to-end testing & bug fixes | ⬜ |
+| REQ-0015 | UI Polish — Idle state messaging and edge case handling (extra) | ✅ |
+| REQ-0016 | Hand raise toggle + visual indicator | ⬜ |
+| REQ-0017 | "Spoken" tracking and round reset logic | ⬜ |
+| REQ-0018 | Disconnect handling (speaker & host) | ⬜ |
+| REQ-0019 | Timer expired indicator + sound notification | ⬜ |
+| REQ-0020 | Mobile-responsive layout adjustments | ⬜ |
+| REQ-0021 | Firebase security rules (basic) | ⬜ |
+| REQ-0022 | End-to-end testing & bug fixes | ⬜ |
 
----
+**Status Symbols**
 
-## Status Symbols
+- ⬜ = Requirements needed — Specification needed.
+- 🟨 = Requirements created — Implementation story file is created and saved in `/docs/stories` folder.
+- ✅ = Completed — Task finished and verified. Completed tasks are stored in `/docs/stories/completed` folder.
 
-- ⬜ = Requirements needed — Specification needed
-- 🟨 = Requirements created — Implementation story file is created and saved in `/docs/stories` folder
-- ✅ = Completed — Task finished and verified
+**References**
+
+- [/docs/stories/](/docs/stories/) - created requirements, but not yet implemented
+- [/docs/stories/completed/](/docs/stories/completed/) - requirements completed
 
 ---
 
