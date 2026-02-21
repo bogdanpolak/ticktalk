@@ -29,9 +29,9 @@
 | REQ-0023 | Meeting Summary with speaking times | ✅ |
 | REQ-0024 | End Meeting warning for unspoken users | ✅ |
 | REQ-0025 | Mobile-responsive layout adjustments | ✅ |
-| REQ-0026 | Meeting layout: participant list in main column | ⬜ |
-| REQ-0027 | Remove Active Speaker panel | ⬜ |
-| REQ-0028 | Participant row total time badge | ⬜ |
+| REQ-0026 | Meeting layout: participant list in main column | 🟨 |
+| REQ-0027 | Remove Active Speaker panel | 🟨 |
+| REQ-0028 | Participant row total time badge | 🟨 |
 | REQ-0029 | Single-turn session flow (no reset) | ⬜ |
 | REQ-0030 | Meeting Summary overtime styling update | ⬜ |
 | REQ-0031 | Firebase security rules (basic) | ⬜ |
