@@ -90,11 +90,20 @@ export function SpeakerSelector({
       )}
 
       {eligibleCandidates.length === 0 ? (
-        <p className="mt-[var(--spacing-m)] text-[14px] leading-normal text-[var(--color-text-muted)]">
-          {candidates.length === 0
-            ? 'No other participants in the session'
-            : 'No eligible participants remaining in this round'}
-        </p>
+        candidates.length === 0 ? (
+          <p className="mt-[var(--spacing-m)] text-[14px] leading-normal text-[var(--color-text-muted)]">
+            No other participants in the session
+          </p>
+        ) : (
+          <div className="mt-[var(--spacing-m)] rounded-[8px] border-l-4 border-[var(--color-warning)] bg-[var(--color-warning)]/10 p-[var(--spacing-m)]">
+            <p className="text-[14px] leading-normal font-medium text-[var(--color-text-primary)]">
+              Round Complete
+            </p>
+            <p className="mt-[var(--spacing-xs)] text-[12px] leading-[1.4] text-[var(--color-text-secondary)]">
+              All participants have spoken. The next speaker will start a new round.
+            </p>
+          </div>
+        )
       ) : (
         <ul className="mt-[var(--spacing-m)] space-y-[var(--spacing-s)]">
           {eligibleCandidates.map(candidate => {

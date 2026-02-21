@@ -1,6 +1,6 @@
 # REQ-0017: "Spoken" Tracking and Round Reset Logic
 
-**Status**: 🟨 Requirements Created  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Core Logic)  
 **Dependencies**: REQ-0011
 
