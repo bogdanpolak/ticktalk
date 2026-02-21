@@ -7,20 +7,22 @@ Implement a Tick-Talk project requirement based on its specification file.
 
 # Important
 
-Before starting implementation, ensure the the review the [Task Tracker](/docs/tasks.md) to check the status of the requirement and its dependencies. Make sure all dependent tasks are completed before you begin implementation. If not do not start the implementation and instead notify the relevant team members to complete the dependencies first.
+1. Before starting implementation, ensure the the review the [Task Tracker](/docs/tasks.md) to check the status of the requirement and its dependencies. Make sure all dependent tasks are completed before you begin implementation. If not do not start the implementation and instead notify the relevant team members to complete the dependencies first.
+2. When user provides multiple requirement to implement after each create a new git commit with the message `Implement REQ-XXXX: Requirement title`. This will help keep track of changes related to each requirement in version control.
 
 # Parameters
 
 The user will provide one of the following:
 - A **requirement ID** (e.g., `REQ-0007`) — look up the file at `docs/stories/REQ-XXXX-*.md`
 - A **file link** to a requirement file in `docs/stories/` folder
+- Multiple requirement IDs or file links — implement them in the order provided, but only if their dependencies are met
 
 # Context Files
 
 Before starting implementation, read and understand these files: 
 
 - **Requirement file** — the specific `docs/stories/REQ-XXXX-*.md` file containing acceptance criteria, implementation details, and file paths
-- **Task Tracker** — [TASKS.md](/docs/TASKS.md) for current task status and dependencies
+- **Task Tracker** — [TASKS.md](/docs/tasks.md) for current task status and dependencies
 
 For UI and Next.JS component implementation, also reference:
 - **Design System** — [DESIGN_SYSTEM.md](/docs/DESIGN_SYSTEM.md)
