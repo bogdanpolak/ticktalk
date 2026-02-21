@@ -8,7 +8,7 @@ Implement a Tick-Talk project requirement based on its specification file.
 # Important
 
 1. Before starting implementation, ensure the the review the [Task Tracker](/docs/tasks.md) to check the status of the requirement and its dependencies. Make sure all dependent tasks are completed before you begin implementation. If not do not start the implementation and instead notify the relevant team members to complete the dependencies first.
-2. When user provides multiple requirement to implement after each create a new git commit with the message `Implement REQ-XXXX: Requirement title`. This will help keep track of changes related to each requirement in version control.
+2. When user provides multiple requirement to implement after each create a new git commit with the message `#REQ-XXXX: Requirement title`. This will help keep track of changes related to each requirement in version control.
 
 # Parameters
 
