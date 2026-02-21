@@ -89,32 +89,6 @@ export function useSession(sessionId: string | null, userId: string | null = nul
       }
     )
 
-    // Monitor host presence and promote if disconnected
-    if (userId) {
-      const checkHostPresence = () => {
-        const snapshot = db.ref(`sessions/${sessionId}`)
-        onValue(snapshot, async (snap) => {
-          const session = snap.val() as Session
-          if (!session) return
-
-          const hostId = session.hostId
-          const hostPresence = session.presence?.[hostId]
-          
-          if (hostPresence && hostPresence.status === 'offline') {
-            // Host is offline, attempt promotion
-            try {
-              await promoteHostOnDisconnect(sessionId, hostId)
-            } catch (err) {
-              console.error('Failed to promote host:', err)
-            }
-          }
-        })
-      }
-      
-      // Initial check
-      checkHostPresence()
-    }
-
     // Cleanup listener on unmount or sessionId change
     return () => {
       isCurrentSubscription = false

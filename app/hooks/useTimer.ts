@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { playTimerExpiredSound } from '@/lib/audio'
 
 interface TimerState {
   remaining: number
@@ -17,20 +18,37 @@ export function useTimer(slotEndsAt: number | null): TimerState {
   const [remaining, setRemaining] = useState<number>(() =>
     computeRemaining(slotEndsAt)
   )
+  const [hasPlayedSound, setHasPlayedSound] = useState(false)
 
   useEffect(() => {
     // If no active timer, interval not needed
     if (slotEndsAt === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHasPlayedSound(false)
       return
     }
 
     // If already expired, no need to tick
     const initial = computeRemaining(slotEndsAt)
-    if (initial <= 0) return
+    if (initial <= 0) {
+      setRemaining(0)
+      if (!hasPlayedSound) {
+        playTimerExpiredSound()
+        setHasPlayedSound(true)
+      }
+      return
+    }
 
     const intervalId = setInterval(() => {
       const newRemaining = computeRemaining(slotEndsAt)
       setRemaining(newRemaining)
+
+      // Play sound once when timer reaches zero
+      if (newRemaining <= 0 && !hasPlayedSound) {
+        playTimerExpiredSound()
+        setHasPlayedSound(true)
+        clearInterval(intervalId)
+      }
 
       // Stop ticking once expired
       if (newRemaining <= 0) {
@@ -41,11 +59,17 @@ export function useTimer(slotEndsAt: number | null): TimerState {
     return () => {
       clearInterval(intervalId)
     }
-  }, [slotEndsAt])
+  }, [slotEndsAt, hasPlayedSound])
 
   // Sync remaining with slotEndsAt changes outside of effect
   useEffect(() => {
-    setRemaining(computeRemaining(slotEndsAt))
+    const newRemaining = computeRemaining(slotEndsAt)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRemaining(newRemaining)
+    // Reset sound flag when timer restarts
+    if (newRemaining > 0) {
+      setHasPlayedSound(false)
+    }
   }, [slotEndsAt])
 
   const isActive = slotEndsAt !== null

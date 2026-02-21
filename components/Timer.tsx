@@ -4,9 +4,9 @@ import { useTimer } from '@/app/hooks/useTimer'
 
 type TimerState = 'idle' | 'normal' | 'warning' | 'critical' | 'expired'
 
-function getTimerState(remaining: number, isActive: boolean): TimerState {
+function getTimerState(remaining: number, isActive: boolean, isExpired: boolean): TimerState {
   if (!isActive) return 'idle'
-  if (remaining <= 0) return 'expired'
+  if (isExpired || remaining <= 0) return 'expired'
   if (remaining <= 5) return 'critical'
   if (remaining <= 15) return 'warning'
   return 'normal'
@@ -33,9 +33,9 @@ interface TimerProps {
 }
 
 export function Timer({ slotEndsAt, slotDurationSeconds }: TimerProps) {
-  const { remaining } = useTimer(slotEndsAt)
+  const { remaining, isExpired } = useTimer(slotEndsAt)
   const isActive = slotEndsAt !== null
-  const timerState = getTimerState(remaining, isActive)
+  const timerState = getTimerState(remaining, isActive, isExpired)
 
   return (
     <div
@@ -45,30 +45,40 @@ export function Timer({ slotEndsAt, slotDurationSeconds }: TimerProps) {
       className={`
         rounded-xl p-8 text-center transition-colors duration-300
         ${stateStyles[timerState]}
+        ${timerState === 'expired' ? 'animate-pulse' : ''}
       `}
+      style={timerState === 'expired' ? { animationIterationCount: 'infinite' } : undefined}
     >
-      {/* Timer Display */}
-      <div className="text-[64px] font-medium leading-[1.2] tabular-nums">
-        {isActive ? (isNaN(remaining) ? '...' : formatTime(remaining)) : '—:——'}
-      </div>
+      {/* Expired State */}
+      {timerState === 'expired' ? (
+        <div>
+          <div className="text-[18px] font-medium leading-[1.4] uppercase tracking-wide">
+            ⏰ Time Expired
+          </div>
+          <div className="mt-[var(--spacing-s)] text-[12px] leading-[1.4] opacity-90">
+            Please end your slot to continue
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Timer Display */}
+          <div className="text-[64px] font-medium leading-[1.2] tabular-nums">
+            {isActive ? (isNaN(remaining) ? '...' : formatTime(remaining)) : '—:——'}
+          </div>
 
-      {/* Status Label */}
-      {timerState === 'expired' && (
-        <p className="mt-2 text-lg font-medium animate-pulse">
-          ⏰ Time Expired
-        </p>
-      )}
+          {/* Status Label */}
+          {timerState === 'warning' && (
+            <p className="mt-2 text-sm font-medium opacity-80">
+              Wrapping up...
+            </p>
+          )}
 
-      {timerState === 'warning' && (
-        <p className="mt-2 text-sm font-medium opacity-80">
-          Wrapping up...
-        </p>
-      )}
-
-      {timerState === 'idle' && (
-        <p className="mt-2 text-sm">
-          {Math.floor(slotDurationSeconds / 60)} min per speaker
-        </p>
+          {timerState === 'idle' && (
+            <p className="mt-2 text-sm">
+              {Math.floor(slotDurationSeconds / 60)} min per speaker
+            </p>
+          )}
+        </>
       )}
     </div>
   )
