@@ -71,6 +71,7 @@ export function SpeakerSelector({
       await selectNextSpeaker(sessionId, nextSpeakerId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to select speaker')
+    } finally {
       setIsSelecting(false)
     }
   }
