@@ -1,6 +1,6 @@
 # REQ-0014: Host "Start Meeting" + "End Meeting" Controls
 
-**Status**: ⬜ Not Started  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Session Lifecycle)  
 **Dependencies**: REQ-0007
 

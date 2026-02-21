@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useSession } from '@/app/hooks/useSession'
-import { startMeeting } from '@/lib/session'
+import { endMeeting, startMeeting } from '@/lib/session'
 import { ActiveSpeaker } from '@/components/ActiveSpeaker'
 import { Timer } from '@/components/Timer'
 import { MeetingControls } from '@/components/MeetingControls'
@@ -90,6 +90,7 @@ function LobbyView({
 }) {
   const [isCopied, setIsCopied] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
   const isHost = userId === session.hostId
 
   const joinLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${sessionId}`
@@ -106,11 +107,12 @@ function LobbyView({
   }
 
   const handleStartMeeting = async () => {
+    setStartError(null)
     setIsStarting(true)
     try {
       await startMeeting(sessionId)
     } catch (err) {
-      console.error('Failed to start meeting:', err)
+      setStartError(err instanceof Error ? err.message : 'Failed to start meeting')
       setIsStarting(false)
     }
   }
@@ -172,13 +174,20 @@ function LobbyView({
 
         {/* Start Meeting or Waiting */}
         {isHost ? (
-          <button
-            onClick={handleStartMeeting}
-            disabled={isStarting || participants.length < 2}
-            className="w-full py-3 bg-[var(--color-success)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {isStarting ? 'Starting...' : 'Start Meeting'}
-          </button>
+          <div className="flex flex-col gap-[var(--spacing-s)]">
+            <button
+              onClick={handleStartMeeting}
+              disabled={isStarting}
+              className="w-full h-11 px-[var(--spacing-m)] bg-[var(--color-brand)] text-[var(--color-surface)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-active)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
+            >
+              {isStarting ? 'Starting...' : 'Start Meeting'}
+            </button>
+            {startError && (
+              <p className="text-[12px] leading-[1.4] text-[var(--color-error)]">
+                {startError}
+              </p>
+            )}
+          </div>
         ) : (
           <p className="text-center text-[var(--color-text-muted)] py-4">
             Waiting for host to start the meeting...
@@ -271,6 +280,13 @@ function ActiveMeetingView({
               activeSpeakerId={session.activeSpeakerId}
               isHost={isHost}
             />
+
+            {isHost && (
+              <HostEndMeetingControl
+                sessionId={sessionId}
+                activeSpeakerId={session.activeSpeakerId ?? null}
+              />
+            )}
           </section>
 
           <aside>
@@ -284,5 +300,55 @@ function ActiveMeetingView({
         </div>
       </div>
     </main>
+  )
+}
+
+function HostEndMeetingControl({
+  sessionId,
+  activeSpeakerId
+}: {
+  sessionId: string
+  activeSpeakerId: string | null
+}) {
+  const [isEnding, setIsEnding] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const isBlocked = activeSpeakerId !== null
+
+  const handleEndMeeting = async () => {
+    setError(null)
+    setIsEnding(true)
+    try {
+      await endMeeting(sessionId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to end meeting')
+      setIsEnding(false)
+    }
+  }
+
+  return (
+    <section className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-[8px] p-[var(--spacing-l)]">
+      <div className="flex flex-col gap-[var(--spacing-s)]">
+        <button
+          type="button"
+          onClick={handleEndMeeting}
+          disabled={isEnding || isBlocked}
+          className="h-11 px-[var(--spacing-m)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-surface-subtle)] active:bg-[var(--color-surface-subtle)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
+        >
+          {isEnding ? 'Ending...' : 'End Meeting'}
+        </button>
+
+        {isBlocked && (
+          <p className="text-[12px] leading-[1.4] text-[var(--color-text-muted)]">
+            End meeting is available when no speaker is active.
+          </p>
+        )}
+
+        {error && (
+          <p className="text-[12px] leading-[1.4] text-[var(--color-error)]">
+            {error}
+          </p>
+        )}
+      </div>
+    </section>
   )
 }
