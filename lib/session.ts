@@ -15,8 +15,8 @@ export interface Session {
   createdAt: number;
   slotDurationSeconds: number;
   status: SessionStatus;
-  activeSpeakerId: string | null;
-  slotEndsAt: number | null;
+  activeSpeakerId: string | null | undefined;
+  slotEndsAt: number | null | undefined;
   spokenUserIds: string[];
   participants: {
     [userId: string]: Participant;
@@ -127,7 +127,9 @@ export async function getSession(sessionId: string): Promise<Session | null> {
     return null;
   }
   
-  return snapshot.val() as Session;
+  const session = snapshot.val() as Session;
+  console.log('Fetched session data:', session);
+  return session;
 }
 
 /**

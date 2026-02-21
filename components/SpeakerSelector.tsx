@@ -32,7 +32,7 @@ export function SpeakerSelector({
   const [error, setError] = useState<string | null>(null)
 
   const isCurrentSpeaker = currentUserId === activeSpeakerId
-  const noActiveSpeaker = activeSpeakerId === null
+  const noActiveSpeaker = !activeSpeakerId
   const canSelect = isCurrentSpeaker || (isHost && noActiveSpeaker)
 
   const candidates = useMemo<CandidateEntry[]>(() => {
