@@ -11,6 +11,7 @@ import { Timer } from '@/components/Timer'
 import { MeetingControls } from '@/components/MeetingControls'
 import { ParticipantList } from '@/components/ParticipantList'
 import { SpeakerSelector } from '@/components/SpeakerSelector'
+import { HandRaiseButton } from '@/components/HandRaiseButton'
 import type { Session } from '@/lib/session'
 
 export default function MeetingPage() {
@@ -241,6 +242,9 @@ function ActiveMeetingView({
   const activeSpeakerName = session.activeSpeakerId
     ? session.participants[session.activeSpeakerId]?.name ?? 'Waiting for speaker'
     : null
+  const currentParticipant = session.participants?.[userId || '']
+  const isHandRaised = currentParticipant?.isHandRaised ?? false
+  const isActiveSpeaker = userId === session.activeSpeakerId
 
   return (
     <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text-primary)] p-4">
@@ -272,6 +276,13 @@ function ActiveMeetingView({
                   !(session.spokenUserIds || []).includes(participantId)
               )}
               onSlotEnded={setLastEndedSpeakerId}
+            />
+
+            <HandRaiseButton
+              sessionId={sessionId}
+              currentUserId={userId}
+              isActiveSpeaker={isActiveSpeaker}
+              isHandRaised={isHandRaised}
             />
 
             <SpeakerSelector

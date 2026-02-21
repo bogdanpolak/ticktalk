@@ -1,6 +1,6 @@
 # REQ-0016: Hand Raise Toggle + Visual Indicator
 
-**Status**: 🟨 Requirements Created  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Core Feature)  
 **Dependencies**: REQ-0007, REQ-0013
 

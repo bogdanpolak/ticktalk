@@ -172,12 +172,26 @@ export async function selectNextSpeaker(
   const sessionRef = ref(db, `sessions/${sessionId}`);
   
   await runTransaction(sessionRef, (session: Session | null) => {
-    if (!session) return session;
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    
+    // Ensure data structures exist
+    const spokenUserIds = session.spokenUserIds || [];
+    const participants = session.participants || {};
+    
+    // Validate: nextSpeakerId exists as participant
+    if (!participants[nextSpeakerId]) {
+      throw new Error(
+        `Participant ${nextSpeakerId} not found in session`
+      );
+    }
     
     // Validate: nextSpeakerId hasn't already spoken in current round
-    if (session.spokenUserIds?.includes(nextSpeakerId)) {
-      // Return session unchanged - transaction will abort
-      return;
+    if (spokenUserIds.includes(nextSpeakerId)) {
+      throw new Error(
+        `Participant ${nextSpeakerId} has already spoken this round`
+      );
     }
     
     // Set new active speaker
@@ -185,16 +199,17 @@ export async function selectNextSpeaker(
     session.slotEndsAt = Date.now() + session.slotDurationSeconds * 1000;
     
     // Add to spoken list
-    const updatedSpokenUserIds = [...(session.spokenUserIds || []), nextSpeakerId];
+    const updatedSpokenUserIds = [...spokenUserIds, nextSpeakerId];
     
     // Check if all participants have spoken
-    const participantIds = Object.keys(session.participants);
-    if (updatedSpokenUserIds.length >= participantIds.length) {
-      // Reset for next round
-      session.spokenUserIds = [];
-    } else {
-      session.spokenUserIds = updatedSpokenUserIds;
-    }
+    const participantIds = Object.keys(participants);
+    const allHaveSpoken = updatedSpokenUserIds.length >= participantIds.length;
+    
+    // Reset if needed
+    const finalSpokenUserIds = allHaveSpoken ? [] : updatedSpokenUserIds;
+    
+    // Update session
+    session.spokenUserIds = finalSpokenUserIds;
     
     return session;
   });
@@ -215,10 +230,13 @@ export async function endCurrentSlot(sessionId: string): Promise<void> {
  */
 export async function toggleHandRaise(
   sessionId: string,
-  userId: string,
-  currentState: boolean
+  userId: string
 ): Promise<void> {
   const participantRef = ref(db, `sessions/${sessionId}/participants/${userId}`);
+  
+  const snapshot = await get(participantRef);
+  const currentState = snapshot.val()?.isHandRaised ?? false;
+  
   await update(participantRef, {
     isHandRaised: !currentState
   });
