@@ -33,7 +33,7 @@
 | REQ-0027 | Remove Active Speaker panel | ✅ |
 | REQ-0028 | Participant row total time badge | ✅ |
 | REQ-0029 | Single-turn session flow (no reset) | ✅ |
-| REQ-0030 | Meeting Summary overtime styling update | 🟨 |
+| REQ-0030 | Meeting Summary overtime styling update | ✅ |
 | REQ-0031 | Firebase security rules (basic) | 🟨 |
 | REQ-0032 | End-to-end testing & bug fixes | ⬜ |
 

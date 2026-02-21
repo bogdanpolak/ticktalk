@@ -68,14 +68,10 @@ export function MeetingSummary({ session }: MeetingSummaryProps) {
 
         <ul className="space-y-[var(--spacing-s)]">
           {rows.map(row => {
-            const rowStyles = row.hasOvertime
-              ? 'border border-[var(--color-error)] bg-[var(--color-error)]/10'
-              : 'border border-[var(--color-border)] bg-[var(--color-surface)]'
-
             return (
               <li
                 key={row.userId}
-                className={`min-h-[56px] rounded-[8px] p-[var(--spacing-m)] ${rowStyles}`}
+                className="min-h-[56px] rounded-[8px] p-[var(--spacing-m)] border border-[var(--color-border)] bg-[var(--color-surface)]"
               >
                 <div className="grid gap-[var(--spacing-s)] sm:grid-cols-[2fr_1fr_1fr_1fr] sm:items-center">
                   <div>
@@ -94,8 +90,8 @@ export function MeetingSummary({ session }: MeetingSummaryProps) {
                   </div>
                   <div className="hidden sm:block">
                     {row.hasOvertime ? (
-                      <span className="inline-flex items-center px-[var(--spacing-s)] py-[var(--spacing-xs)] text-[12px] font-medium border border-[var(--color-error)] text-[var(--color-error)] rounded-[4px]">
-                        Overtime
+                      <span className="text-[12px] text-[var(--color-text-muted)]">
+                        Yes
                       </span>
                     ) : (
                       <span className="text-[12px] text-[var(--color-text-muted)]">—</span>
@@ -104,7 +100,7 @@ export function MeetingSummary({ session }: MeetingSummaryProps) {
 
                   <div className="sm:hidden">
                     {row.hasOvertime && (
-                      <span className="inline-flex items-center px-[var(--spacing-s)] py-[var(--spacing-xs)] text-[12px] font-medium border border-[var(--color-error)] text-[var(--color-error)] rounded-[4px]">
+                      <span className="text-[11px] text-[var(--color-text-muted)]">
                         Overtime
                       </span>
                     )}
