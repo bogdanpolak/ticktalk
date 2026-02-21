@@ -9,6 +9,7 @@ import { startMeeting } from '@/lib/session'
 import { ActiveSpeaker } from '@/components/ActiveSpeaker'
 import { Timer } from '@/components/Timer'
 import { MeetingControls } from '@/components/MeetingControls'
+import { ParticipantList } from '@/components/ParticipantList'
 import { SpeakerSelector } from '@/components/SpeakerSelector'
 import type { Session } from '@/lib/session'
 
@@ -237,40 +238,49 @@ function ActiveMeetingView({
         <h1 className="text-[18px] font-medium leading-[1.4] text-[var(--color-text-secondary)] mb-6">
           Tick-Talk Meeting
         </h1>
-        <ActiveSpeaker
-          activeSpeakerId={session.activeSpeakerId}
-          activeSpeakerName={activeSpeakerName}
-          currentUserId={userId}
-        />
+        <div className="grid gap-[var(--spacing-l)] lg:grid-cols-[2fr_1fr]">
+          <section className="space-y-[var(--spacing-l)]">
+            <ActiveSpeaker
+              activeSpeakerId={session.activeSpeakerId}
+              activeSpeakerName={activeSpeakerName}
+              currentUserId={userId}
+            />
 
-        <div className="mt-6">
-          <Timer
-            slotEndsAt={session.slotEndsAt}
-            slotDurationSeconds={session.slotDurationSeconds}
-          />
-        </div>
+            <Timer
+              slotEndsAt={session.slotEndsAt}
+              slotDurationSeconds={session.slotDurationSeconds}
+            />
 
-        <MeetingControls
-          sessionId={sessionId}
-          currentUserId={userId}
-          activeSpeakerId={session.activeSpeakerId ?? null}
-          hostId={session.hostId}
-          hasEligibleCandidates={Object.entries(session.participants).some(
-            ([participantId]) =>
-              participantId !== userId &&
-              !(session.spokenUserIds || []).includes(participantId)
-          )}
-        />
+            <MeetingControls
+              sessionId={sessionId}
+              currentUserId={userId}
+              activeSpeakerId={session.activeSpeakerId ?? null}
+              hostId={session.hostId}
+              hasEligibleCandidates={Object.entries(session.participants).some(
+                ([participantId]) =>
+                  participantId !== userId &&
+                  !(session.spokenUserIds || []).includes(participantId)
+              )}
+            />
 
-        <div className="mt-6">
-          <SpeakerSelector
-            sessionId={sessionId}
-            participants={session.participants}
-            spokenUserIds={session.spokenUserIds || []}
-            currentUserId={userId}
-            activeSpeakerId={session.activeSpeakerId}
-            isHost={isHost}
-          />
+            <SpeakerSelector
+              sessionId={sessionId}
+              participants={session.participants}
+              spokenUserIds={session.spokenUserIds || []}
+              currentUserId={userId}
+              activeSpeakerId={session.activeSpeakerId}
+              isHost={isHost}
+            />
+          </section>
+
+          <aside>
+            <ParticipantList
+              participants={session.participants}
+              activeSpeakerId={session.activeSpeakerId ?? null}
+              spokenUserIds={session.spokenUserIds || []}
+              hostId={session.hostId}
+            />
+          </aside>
         </div>
       </div>
     </main>

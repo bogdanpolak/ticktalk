@@ -1,6 +1,6 @@
 # REQ-0013: Participant List with Status Indicators
 
-**Status**: ⬜ Not Started  
+**Status**: ✅ Completed  
 **Priority**: High (MVP Visibility)  
 **Dependencies**: REQ-0007, REQ-0008, REQ-0011
 

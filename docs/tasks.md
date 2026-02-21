@@ -16,7 +16,7 @@
 | REQ-0010 | `useTimer` hook (local countdown) | ✅ |
 | REQ-0011 | Speaker selection with transaction logic | ✅ |
 | REQ-0012 | End slot + select next speaker flow | ✅ |
-| REQ-0013 | Participant list with status indicators | 🟨 |
+| REQ-0013 | Participant list with status indicators | ✅ |
 | REQ-0014 | Host "Start Meeting" + "End Meeting" controls | 🟨 |
 | REQ-0015 | UI Polish — Idle state messaging and edge case handling (extra) | ✅ |
 | REQ-0016 | Hand raise toggle + visual indicator | ⬜ |
