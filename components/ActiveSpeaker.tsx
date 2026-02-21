@@ -76,7 +76,7 @@ export function ActiveSpeaker({
     <section className="bg-[var(--color-surface-elevated)] border-2 border-[var(--color-brand)] rounded-[8px] p-[var(--spacing-xl)] text-center shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),_0_2px_4px_-1px_rgba(0,0,0,0.3)]">
       <div className="text-[32px] mb-[var(--spacing-m)]">🎤</div>
       <h2 className="text-[24px] font-medium leading-[1.3] text-[var(--color-text-primary)] mb-[var(--spacing-s)]">
-        {activeSpeakerName ?? 'Unknown'}
+        {activeSpeakerName ?? 'Waiting for speaker'}
       </h2>
       <p className="text-[12px] font-medium text-[var(--color-brand)] mb-[var(--spacing-l)]">
         Currently Speaking

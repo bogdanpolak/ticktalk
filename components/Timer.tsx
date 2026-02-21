@@ -13,7 +13,7 @@ function getTimerState(remaining: number, isActive: boolean): TimerState {
 }
 
 function formatTime(seconds: number): string {
-  if (seconds < 0) seconds = 0
+  if (isNaN(seconds) || seconds < 0) seconds = 0
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins}:${secs.toString().padStart(2, '0')}`
@@ -49,7 +49,7 @@ export function Timer({ slotEndsAt, slotDurationSeconds }: TimerProps) {
     >
       {/* Timer Display */}
       <div className="text-[64px] font-medium leading-[1.2] tabular-nums">
-        {isActive ? formatTime(remaining) : '—:——'}
+        {isActive ? (isNaN(remaining) ? '...' : formatTime(remaining)) : '—:——'}
       </div>
 
       {/* Status Label */}
