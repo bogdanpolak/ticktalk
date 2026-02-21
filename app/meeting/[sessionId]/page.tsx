@@ -6,7 +6,6 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useSession } from '@/app/hooks/useSession'
 import { endMeeting, startMeeting } from '@/lib/session'
-import { ActiveSpeaker } from '@/components/ActiveSpeaker'
 import { Timer } from '@/components/Timer'
 import { MeetingControls } from '@/components/MeetingControls'
 import { ParticipantList } from '@/components/ParticipantList'
@@ -300,9 +299,6 @@ function ActiveMeetingView({
   const prevHostIdRef = useRef<string>(session.hostId)
   
   const isHost = userId === session.hostId
-  const activeSpeakerName = session.activeSpeakerId
-    ? session.participants[session.activeSpeakerId]?.name ?? 'Waiting for speaker'
-    : null
   const currentParticipant = session.participants?.[userId || '']
   const isHandRaised = currentParticipant?.isHandRaised ?? false
   const isActiveSpeaker = userId === session.activeSpeakerId
@@ -348,66 +344,56 @@ function ActiveMeetingView({
           </div>
         )}
 
-        <div className="grid gap-[var(--spacing-l)] lg:grid-cols-[2fr_1fr]">
-          <section className="space-y-[var(--spacing-l)]">
-            <ActiveSpeaker
-              activeSpeakerId={session.activeSpeakerId ?? null}
-              activeSpeakerName={activeSpeakerName}
-              currentUserId={userId}
-            />
+        <div className="space-y-[var(--spacing-l)]">
+          <ParticipantList
+            participants={session.participants}
+            activeSpeakerId={session.activeSpeakerId ?? null}
+            spokenUserIds={session.spokenUserIds || []}
+            hostId={session.hostId}
+          />
 
-            <Timer
-              slotEndsAt={session.slotEndsAt ?? null}
-              slotDurationSeconds={session.slotDurationSeconds}
-            />
+          <Timer
+            slotEndsAt={session.slotEndsAt ?? null}
+            slotDurationSeconds={session.slotDurationSeconds}
+          />
 
-            <MeetingControls
-              sessionId={sessionId}
-              currentUserId={userId}
-              activeSpeakerId={session.activeSpeakerId ?? null}
-              hostId={session.hostId}
-              hasEligibleCandidates={Object.entries(session.participants).some(
-                ([participantId]) =>
-                  !(session.spokenUserIds || []).includes(participantId)
-              )}
-              onSlotEnded={setLastEndedSpeakerId}
-            />
-
-            <HandRaiseButton
-              sessionId={sessionId}
-              currentUserId={userId}
-              isActiveSpeaker={isActiveSpeaker}
-              isHandRaised={isHandRaised}
-            />
-
-            <SpeakerSelector
-              sessionId={sessionId}
-              participants={session.participants}
-              spokenUserIds={session.spokenUserIds || []}
-              currentUserId={userId}
-              activeSpeakerId={session.activeSpeakerId ?? null}
-              isHost={isHost}
-              lastEndedSpeakerId={lastEndedSpeakerId}
-            />
-
-            {isHost && (
-              <HostEndMeetingControl
-                sessionId={sessionId}
-                activeSpeakerId={session.activeSpeakerId ?? null}
-                participants={session.participants}
-                spokenUserIds={session.spokenUserIds || []}
-              />
+          <MeetingControls
+            sessionId={sessionId}
+            currentUserId={userId}
+            activeSpeakerId={session.activeSpeakerId ?? null}
+            hostId={session.hostId}
+            hasEligibleCandidates={Object.entries(session.participants).some(
+              ([participantId]) =>
+                !(session.spokenUserIds || []).includes(participantId)
             )}
-          </section>
+            onSlotEnded={setLastEndedSpeakerId}
+          />
 
-          <aside>
-            <ParticipantList
-              participants={session.participants}
+          <HandRaiseButton
+            sessionId={sessionId}
+            currentUserId={userId}
+            isActiveSpeaker={isActiveSpeaker}
+            isHandRaised={isHandRaised}
+          />
+
+          <SpeakerSelector
+            sessionId={sessionId}
+            participants={session.participants}
+            spokenUserIds={session.spokenUserIds || []}
+            currentUserId={userId}
+            activeSpeakerId={session.activeSpeakerId ?? null}
+            isHost={isHost}
+            lastEndedSpeakerId={lastEndedSpeakerId}
+          />
+
+          {isHost && (
+            <HostEndMeetingControl
+              sessionId={sessionId}
               activeSpeakerId={session.activeSpeakerId ?? null}
+              participants={session.participants}
               spokenUserIds={session.spokenUserIds || []}
-              hostId={session.hostId}
             />
-          </aside>
+          )}
         </div>
       </div>
     </main>
