@@ -1,6 +1,6 @@
 # REQ-0036: Hide MeetingControls for Non-Active Participants
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: Medium (Meeting UX)
 **Dependencies**: REQ-0014, REQ-0012
 
@@ -14,11 +14,11 @@ Hide the `MeetingControls` component for participants who are neither the active
 
 ## Acceptance Criteria
 
-- [ ] Host always sees MeetingControls (including End Meeting).
-- [ ] Active speaker sees MeetingControls (End My Slot).
-- [ ] Non-active, non-host participants do not see MeetingControls at all.
-- [ ] No placeholder or empty container is rendered when hidden.
-- [ ] Behavior is consistent across desktop and mobile.
+- [x] Host always sees MeetingControls (including End Meeting).
+- [x] Active speaker sees MeetingControls (End My Slot).
+- [x] Non-active, non-host participants do not see MeetingControls at all.
+- [x] No placeholder or empty container is rendered when hidden.
+- [x] Behavior is consistent across desktop and mobile.
 
 ---
 
@@ -64,7 +64,7 @@ Hide the `MeetingControls` component for participants who are neither the active
 
 ## Completion Checklist
 
-- [ ] Controls hidden for non-active, non-host participants.
-- [ ] Host and active speaker visibility works.
-- [ ] No layout gaps.
-- [ ] `tasks.md` updated to ✅ when implemented.
+- [x] Controls hidden for non-active, non-host participants.
+- [x] Host and active speaker visibility works.
+- [x] No layout gaps.
+- [x] `tasks.md` updated to ✅ when implemented.

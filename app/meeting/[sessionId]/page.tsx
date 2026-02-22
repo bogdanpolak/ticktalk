@@ -5,14 +5,13 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useSession } from '@/app/hooks/useSession'
-import { endMeeting, startMeeting } from '@/lib/session'
+import { startMeeting } from '@/lib/session'
 import { Timer } from '@/components/Timer'
 import { MeetingControls } from '@/components/MeetingControls'
 import { ParticipantList } from '@/components/ParticipantList'
 import { SpeakerSelector } from '@/components/SpeakerSelector'
 import { HandRaiseButton } from '@/components/HandRaiseButton'
 import { MeetingSummary } from '@/components/MeetingSummary'
-import { EndMeetingDialog } from '@/components/EndMeetingDialog'
 import type { Session } from '@/lib/session'
 
 export default function MeetingPage() {
@@ -302,6 +301,7 @@ function ActiveMeetingView({
   const currentParticipant = session.participants?.[userId || '']
   const isHandRaised = currentParticipant?.isHandRaised ?? false
   const isActiveSpeaker = userId === session.activeSpeakerId
+  const showMeetingControls = isHost || isActiveSpeaker
 
   // Monitor for host changes
   useEffect(() => {
@@ -361,11 +361,15 @@ function ActiveMeetingView({
             sessionId={sessionId}
             currentUserId={userId}
             activeSpeakerId={session.activeSpeakerId ?? null}
-            hostId={session.hostId}
+            isHost={isHost}
+            isActiveSpeaker={isActiveSpeaker}
+            isVisible={showMeetingControls}
             hasEligibleCandidates={Object.entries(session.participants).some(
               ([participantId]) =>
                 !(session.spokenUserIds || []).includes(participantId)
             )}
+            participants={session.participants}
+            spokenUserIds={session.spokenUserIds || []}
             onSlotEnded={setLastEndedSpeakerId}
           />
 
@@ -386,86 +390,8 @@ function ActiveMeetingView({
             lastEndedSpeakerId={lastEndedSpeakerId}
           />
 
-          {isHost && (
-            <HostEndMeetingControl
-              sessionId={sessionId}
-              activeSpeakerId={session.activeSpeakerId ?? null}
-              participants={session.participants}
-              spokenUserIds={session.spokenUserIds || []}
-            />
-          )}
         </div>
       </div>
     </main>
-  )
-}
-
-function HostEndMeetingControl({
-  sessionId,
-  activeSpeakerId,
-  participants,
-  spokenUserIds
-}: {
-  sessionId: string
-  activeSpeakerId: string | null
-  participants: Session['participants']
-  spokenUserIds: string[]
-}) {
-  const [isEnding, setIsEnding] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-
-  const unspokenCount = Object.keys(participants).filter(
-    participantId => !spokenUserIds.includes(participantId)
-  ).length
-
-  const handleEndMeeting = async () => {
-    setError(null)
-    setIsEnding(true)
-    try {
-      await endMeeting(sessionId)
-      setIsDialogOpen(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to end meeting')
-      setIsEnding(false)
-    }
-  }
-
-  const handleEndMeetingClick = () => {
-    if (unspokenCount > 0) {
-      setIsDialogOpen(true)
-      return
-    }
-
-    void handleEndMeeting()
-  }
-
-  return (
-    <section className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-[8px] p-[var(--spacing-l)]">
-      <div className="flex flex-col gap-[var(--spacing-s)]">
-        <button
-          type="button"
-          onClick={handleEndMeetingClick}
-          disabled={isEnding}
-          className="h-11 px-[var(--spacing-m)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[12px] font-medium rounded-[0px] hover:bg-[var(--color-surface-subtle)] active:bg-[var(--color-surface-subtle)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-0"
-        >
-          {isEnding ? 'Ending...' : activeSpeakerId ? 'End Meeting (Speaker Active)' : 'End Meeting'}
-        </button>
-
-        {error && (
-          <p className="text-[12px] leading-[1.4] text-[var(--color-error)]">
-            {error}
-          </p>
-        )}
-      </div>
-
-      <EndMeetingDialog
-        isOpen={isDialogOpen}
-        unspokenCount={unspokenCount}
-        onCancel={() => setIsDialogOpen(false)}
-        onConfirm={handleEndMeeting}
-        isConfirming={isEnding}
-      />
-    </section>
   )
 }
