@@ -34,14 +34,19 @@
 | REQ-0028 | Participant row total time badge | ✅ |
 | REQ-0029 | Single-turn session flow (no reset) | ✅ |
 | REQ-0030 | Meeting Summary overtime styling update | ✅ |
-| REQ-0031 | Firebase security rules (basic) | 🟨 |
-| REQ-0032 | End-to-end testing & bug fixes | ⬜ |
 
 **Status Symbols**
 
 - ⬜ = Requirements needed — Specification needed.
 - 🟨 = Requirements created — Implementation story file is created and saved in `/docs/stories` folder.
 - ✅ = Completed — Task finished and verified. Completed tasks are stored in `/docs/stories/completed` folder.
+
+**Consider later:** 
+
+After MVP completion consider implementation following tasks/requirements:
+- Firebase security rules (basic)
+- End-to-end testing & bug fixes
+
 
 **References**
 
