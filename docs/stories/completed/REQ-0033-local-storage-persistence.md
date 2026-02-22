@@ -1,6 +1,6 @@
 # REQ-0033: Local Storage Persistence for Settings
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: Medium (Persistence)
 **Dependencies**: REQ-0005, REQ-0006
 
@@ -14,11 +14,11 @@ Persist the user's name and slot duration settings in local storage. Settings sh
 
 ## Acceptance Criteria
 
-- [ ] Local storage keys match the specified names.
-- [ ] `saveSettings(name, duration, isCustom)` stores values correctly.
-- [ ] `loadSettings()` returns the stored values or sensible defaults.
-- [ ] Save occurs only on successful create/join.
-- [ ] Storage works for both Home and Join flows.
+- [x] Local storage keys match the specified names.
+- [x] `saveSettings(name, duration, isCustom)` stores values correctly.
+- [x] `loadSettings()` returns the stored values or sensible defaults.
+- [x] Save occurs only on successful create/join.
+- [x] Storage works for both Home and Join flows.
 
 ---
 
@@ -72,7 +72,7 @@ Persist the user's name and slot duration settings in local storage. Settings sh
 
 ## Completion Checklist
 
-- [ ] Storage helpers implemented and used.
-- [ ] Settings saved only on success.
-- [ ] Keys match spec.
-- [ ] `tasks.md` updated to ✅ when implemented.
+- [x] Storage helpers implemented and used.
+- [x] Settings saved only on success.
+- [x] Keys match spec.
+- [x] `tasks.md` updated to ✅ when implemented.

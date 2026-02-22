@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { createSession } from '@/lib/session'
+import { loadSettings, saveSettings } from '@/lib/storage'
 
 const DURATION_OPTIONS: { label: string; value: number | 'custom' }[] = [
   { label: '1:00', value: 60 },
@@ -22,10 +23,13 @@ export default function HomePage() {
   const router = useRouter()
   const { userId, isLoading: authLoading } = useAuth()
 
-  const [name, setName] = useState('')
-  const [duration, setDuration] = useState(120) // Default: 2 minutes
-  const [isCustomDuration, setIsCustomDuration] = useState(false)
-  const [customDuration, setCustomDuration] = useState('120')
+  const [initialSettings] = useState(() => loadSettings())
+  const [name, setName] = useState(initialSettings.userName)
+  const [duration, setDuration] = useState(initialSettings.slotDuration)
+  const [isCustomDuration, setIsCustomDuration] = useState(initialSettings.isCustomDuration)
+  const [customDuration, setCustomDuration] = useState(
+    initialSettings.isCustomDuration ? String(initialSettings.slotDuration) : '120'
+  )
   const [customDurationError, setCustomDurationError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +69,8 @@ export default function HomePage() {
         hostName: name,
         slotDurationSeconds
       })
+
+      saveSettings(name.trim(), slotDurationSeconds, isCustomDuration)
 
       // Redirect to meeting page
       router.push(`/meeting/${sessionId}`)

@@ -7,6 +7,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useSession } from '@/app/hooks/useSession'
 import { joinSession } from '@/lib/session'
+import { loadSettings, saveSettings } from '@/lib/storage'
+
+const FIXED_DURATION_VALUES = new Set([60, 75, 90, 105, 120, 135, 150, 165, 180])
 
 export default function JoinPage() {
   const router = useRouter()
@@ -21,7 +24,7 @@ export default function JoinPage() {
     error: sessionError
   } = useSession(sessionId ?? null)
 
-  const [name, setName] = useState('')
+  const [name, setName] = useState(() => loadSettings().userName)
   const [isJoining, setIsJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -59,6 +62,9 @@ export default function JoinPage() {
     try {
       setIsJoining(true)
       await joinSession(sessionId, userId, trimmedName)
+      const slotDurationSeconds = session.slotDurationSeconds
+      const isCustomDuration = !FIXED_DURATION_VALUES.has(slotDurationSeconds)
+      saveSettings(trimmedName, slotDurationSeconds, isCustomDuration)
       router.push(`/meeting/${sessionId}`)
     } catch (joinError) {
       setIsJoining(false)
