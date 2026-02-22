@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
+import { useLocalStorage } from '@/app/hooks/useLocalStorage'
 import { createSession } from '@/lib/session'
-import { loadSettings, saveSettings } from '@/lib/storage'
+import { saveSettings } from '@/lib/storage'
 
 const DURATION_OPTIONS: { label: string; value: number | 'custom' }[] = [
   { label: '1:00', value: 60 },
@@ -22,17 +23,31 @@ const DURATION_OPTIONS: { label: string; value: number | 'custom' }[] = [
 export default function HomePage() {
   const router = useRouter()
   const { userId, isLoading: authLoading } = useAuth()
+  const { settings, hasStoredName, isReady } = useLocalStorage()
 
-  const [initialSettings] = useState(() => loadSettings())
-  const [name, setName] = useState(initialSettings.userName)
-  const [duration, setDuration] = useState(initialSettings.slotDuration)
-  const [isCustomDuration, setIsCustomDuration] = useState(initialSettings.isCustomDuration)
+  const [name, setName] = useState(settings.userName)
+  const [duration, setDuration] = useState(settings.slotDuration)
+  const [isCustomDuration, setIsCustomDuration] = useState(settings.isCustomDuration)
   const [customDuration, setCustomDuration] = useState(
-    initialSettings.isCustomDuration ? String(initialSettings.slotDuration) : '120'
+    settings.isCustomDuration ? String(settings.slotDuration) : '120'
   )
   const [customDurationError, setCustomDurationError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const nameInputRef = useRef<HTMLInputElement | null>(null)
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    if (!isReady || authLoading) {
+      return
+    }
+
+    if (hasStoredName) {
+      submitButtonRef.current?.focus()
+    } else {
+      nameInputRef.current?.focus()
+    }
+  }, [authLoading, hasStoredName, isReady])
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -152,6 +167,7 @@ export default function HomePage() {
               value={name}
               onChange={e => setName(e.target.value)}
               disabled={isCreating}
+              ref={nameInputRef}
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
@@ -326,6 +342,7 @@ export default function HomePage() {
           <button
             type="submit"
             disabled={isCreating || !name.trim()}
+            ref={submitButtonRef}
             style={{
               width: '100%',
               background: isCreating || !name.trim() 

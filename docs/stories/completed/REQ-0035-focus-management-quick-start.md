@@ -1,6 +1,6 @@
 # REQ-0035: Focus Management for Quick Start UX
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: Medium (UX)
 **Dependencies**: REQ-0034
 
@@ -14,10 +14,10 @@ Improve quick-start UX by focusing the correct element after settings are loaded
 
 ## Acceptance Criteria
 
-- [ ] If no stored name, focus the name input on load.
-- [ ] If stored name exists, focus the primary button (Create or Join).
-- [ ] Focus occurs after settings load, without visible flicker.
-- [ ] Works on both Home and Join pages.
+- [x] If no stored name, focus the name input on load.
+- [x] If stored name exists, focus the primary button (Create or Join).
+- [x] Focus occurs after settings load, without visible flicker.
+- [x] Works on both Home and Join pages.
 
 ---
 
@@ -65,7 +65,7 @@ Improve quick-start UX by focusing the correct element after settings are loaded
 
 ## Completion Checklist
 
-- [ ] Focus logic works on Home and Join.
-- [ ] Focus respects stored name presence.
-- [ ] No UI flicker from late focus.
-- [ ] `tasks.md` updated to ✅ when implemented.
+- [x] Focus logic works on Home and Join.
+- [x] Focus respects stored name presence.
+- [x] No UI flicker from late focus.
+- [x] `tasks.md` updated to ✅ when implemented.

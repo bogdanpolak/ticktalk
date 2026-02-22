@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
+import { useLocalStorage } from '@/app/hooks/useLocalStorage'
 import { useSession } from '@/app/hooks/useSession'
 import { joinSession } from '@/lib/session'
-import { loadSettings, saveSettings } from '@/lib/storage'
+import { saveSettings } from '@/lib/storage'
 
 const FIXED_DURATION_VALUES = new Set([60, 75, 90, 105, 120, 135, 150, 165, 180])
 
@@ -18,15 +19,34 @@ export default function JoinPage() {
   const sessionId = Array.isArray(sessionIdParam) ? sessionIdParam[0] : sessionIdParam
 
   const { userId, isLoading: authLoading } = useAuth()
+  const { settings, hasStoredName, isReady } = useLocalStorage()
   const {
     session,
     isLoading: sessionLoading,
     error: sessionError
   } = useSession(sessionId ?? null)
 
-  const [name, setName] = useState(() => loadSettings().userName)
+  const [name, setName] = useState(settings.userName)
   const [isJoining, setIsJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const nameInputRef = useRef<HTMLInputElement | null>(null)
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    if (!isReady || authLoading || sessionLoading) {
+      return
+    }
+
+    if (!sessionId || !session || session.status === 'finished') {
+      return
+    }
+
+    if (hasStoredName) {
+      submitButtonRef.current?.focus()
+    } else {
+      nameInputRef.current?.focus()
+    }
+  }, [authLoading, hasStoredName, isReady, session, sessionId, sessionLoading])
 
   const handleJoin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -148,7 +168,7 @@ export default function JoinPage() {
               onChange={event => setName(event.target.value)}
               disabled={isJoining}
               required
-              autoFocus
+              ref={nameInputRef}
               className="w-full h-11 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-none text-[14px] text-[var(--color-text-primary)] px-[var(--spacing-m)] placeholder:text-[var(--color-text-muted)] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)]"
             />
           </div>
@@ -162,6 +182,7 @@ export default function JoinPage() {
           <button
             type="submit"
             disabled={isJoining || !name.trim()}
+            ref={submitButtonRef}
             className="w-full h-11 bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-active)] text-white text-[12px] font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)]"
           >
             {isJoining ? 'Joining...' : 'Join Session'}
