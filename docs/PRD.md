@@ -96,7 +96,21 @@ Host:
 * Logs in (name only for MVP)
 * Sets:
 
-  * Slot duration (e.g., 2 minutes)
+  * Slot duration from predefined options:
+    * 60 seconds (1:00)
+    * 75 seconds (1:15)
+    * 90 seconds (1:30)
+    * 105 seconds (1:45)
+    * 120 seconds (2:00) — default
+    * 135 seconds (2:15)
+    * 150 seconds (2:30)
+    * 165 seconds (2:45)
+    * 180 seconds (3:00)
+    * Custom... (30-3600 seconds)
+  * Custom duration input appears below selector when "Custom..." selected
+  * Pre-populated with 120 seconds (or last custom value from local storage)
+  * Validation on submit: 30-3600 seconds
+* Previously entered name and duration pre-loaded from browser local storage
 * Gets unique join link
 
 ---
@@ -143,19 +157,31 @@ Active Speaker:
 
 ## 5.4 Timer Logic
 
-* Timer duration defined by host.
+* Timer duration defined by host (from selector or custom input).
 * When speaker selected:
 
   * Server sets `slotEndsAt`
   * All clients compute countdown locally.
   * System begins tracking speaker slot start time for duration calculation
+* Timer color states based on percentage elapsed:
+
+  * **Normal** (0-75% elapsed): Default state
+  * **Warning** (75% elapsed / 25% remaining): Visual change + optional sound notification
+    * For 120s slot: triggers at 30s remaining
+  * **Critical** (87.5% elapsed / 12.5% remaining): Visual change + optional sound notification
+    * Minimum threshold: 5 seconds
+    * For 120s slot: triggers at 15s remaining
+    * For 60s slot: triggers at max(7.5s, 5s) = 7.5s remaining
+  * **Expired** (100% elapsed): "⏰ Time Expired" indicator + sound notification
+  * **Over-time** (>100% elapsed): "+M:SS" format display
 * When time expires:
 
-  * Timer shows "⏰ Time Expired" indicator in red
+  * Timer shows "⏰ Time Expired" indicator in red with sound notification
   * Slot remains active - speaker is NOT automatically ended
   * Speaker can continue and must manually end their slot
   * If speaker continues past allocated time, timer switches to over-time display format: "+0:45" (red background, distinct visual state)
   * Speaker then selects next from participants who haven't spoken (if any remain)
+* Sound notifications play at warning, critical, and expired thresholds
 
 Server remains authoritative for slot duration.
 
@@ -189,7 +215,44 @@ Inactive participants:
 * Can toggle “Raise Hand”
 * Visual indicator next to name
 * Active speaker may address before continuing
+---
 
+## 5.8 Local Storage Persistence
+
+To minimize friction and speed up session creation/joining:
+
+* Browser local storage persists:
+  * User name (shared across Home and Join pages)
+  * Slot duration (including custom values)
+* Settings pre-loaded when page loads
+* Settings saved only when session is successfully created/joined
+* Storage is per-browser (not per-user)
+* No explicit UI to clear settings; clearing browser data resets
+
+---
+
+## 5.9 Quick Start UX
+
+Focus management for faster session start:
+
+* **First-time users** (no stored settings): Focus on Name input field
+* **Returning users** (stored settings exist): Focus on action button ("Create Session" or "Join")
+* Allows keyboard-only workflow: pre-loaded settings + Enter key to proceed
+* Reduces clicks required to start/join meeting
+
+---
+
+## 5.10 Meeting Controls Visibility
+
+To reduce visual clutter for non-active participants:
+
+* **MeetingControls component** (End My Slot + End Meeting buttons) only visible to:
+  * Active speaker (shows "End My Slot" button)
+  * Host (always sees "End Meeting" button, regardless of speaker status)
+* **Non-active, non-host participants**: MeetingControls hidden
+  * No placeholder or message shown
+  * SpeakerSelector sufficient for next speaker selection
+* Same behavior on mobile (no special mobile layout difference)
 ---
 
 # 6. User Flow
@@ -240,6 +303,15 @@ Open Link → Enter Name → Wait in Lobby → Meeting Starts → Speak When Act
 | F22 | Participant list is shown in the main column for all breakpoints |
 | F23 | Participant row shows total time as "Total: M:SS" with no overtime highlight |
 | F24 | Active speaker has no dedicated panel (list indicator only)  |
+| F25 | Host can set custom slot duration (30-3600 seconds)          |
+| F26 | Duration selector includes 9 predefined options + "Custom..." |
+| F27 | Local storage persists user name and slot duration           |
+| F28 | Settings pre-loaded on Home and Join page load               |
+| F29 | Focus management: action button for returning users          |
+| F30 | MeetingControls hidden for non-active, non-host participants |
+| F31 | Timer warning state at 75% elapsed (25% remaining)           |
+| F32 | Timer critical state at 87.5% elapsed (12.5% remaining, min 5s) |
+| F33 | Sound notifications at warning, critical, and expired thresholds |
 
 ---
 

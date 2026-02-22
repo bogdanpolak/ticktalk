@@ -85,15 +85,37 @@ app/
 
 ### 3.1 Home Page (`/`)
 
-- Name input field
-- Slot duration selector (default: 2 minutes)
-- "Create Session" button → generates session in Firebase, redirects to meeting page
+- Name input field (pre-loaded from local storage if available)
+- Slot duration selector with options:
+  - 60 seconds (1:00)
+  - 75 seconds (1:15)
+  - 90 seconds (1:30)
+  - 105 seconds (1:45)
+  - 120 seconds (2:00) — default
+  - 135 seconds (2:15)
+  - 150 seconds (2:30)
+  - 165 seconds (2:45)
+  - 180 seconds (3:00)
+  - Custom...
+- Custom duration input field (appears when "Custom..." selected):
+  - Pre-populated with 120 seconds (or last custom value from local storage)
+  - Validation text: "Enter custom duration in seconds (30-3600)"
+  - Validation on submit: 30-3600 seconds
+- Settings pre-loaded from browser local storage on page load
+- Focus management:
+  - First-time users (no stored name): Focus on Name input
+  - Returning users (stored name exists): Focus on "Create Session" button
+- "Create Session" button → generates session in Firebase, saves settings to local storage, redirects to meeting page
 - Session link displayed for sharing
 
 ### 3.2 Join Page (`/join/[sessionId]`)
 
-- Name input field
-- "Join" button → adds participant to Firebase session, redirects to meeting page
+- Name input field (pre-loaded from local storage if available)
+- Settings pre-loaded from browser local storage on page load
+- Focus management:
+  - First-time users (no stored name): Focus on Name input
+  - Returning users (stored name exists): Focus on "Join" button
+- "Join" button → adds participant to Firebase session, saves settings to local storage, redirects to meeting page
 - If session doesn't exist → error message
 
 ### 3.3 Meeting Page (`/meeting/[sessionId]`)
@@ -116,12 +138,16 @@ Single page with conditional rendering based on `session.status`:
   - 🎤 Currently speaking indicator
   - 📊 Total speaking time per participant
 - Active speaker sees:
-  - "End My Slot" button
+  - "End My Slot" button (in MeetingControls)
   - Cumulative speaking time display
 - Host sees:
-  - "End Meeting" button (always enabled)
+  - "End Meeting" button (always visible, regardless of speaker status)
   - Same participant list as active speaker
   - If clicking End Meeting with unspoken participants: warning dialog "X participants haven't spoken yet. End meeting anyway?"
+- Non-active, non-host participants:
+  - MeetingControls component is hidden
+  - No placeholder or message shown
+  - SpeakerSelector visible for next speaker selection
 
 **Finished state** (`status: "finished"`) or End Meeting clicked:
 - Meeting Summary view:
@@ -232,13 +258,32 @@ Client-side countdown computed from `slotEndsAt`:
 const now = Date.now()
 const elapsed = now - session.slotStartedAt
 const remaining = (session.slotEndsAt - now) / 1000
+const slotDuration = session.slotDurationSeconds
+
+// Calculate percentage elapsed
+const percentElapsed = (elapsed / (slotDuration * 1000)) * 100
+
+// Calculate thresholds
+const warningThreshold = Math.ceil(slotDuration * 0.25) // 25% remaining
+const criticalThreshold = Math.max(Math.ceil(slotDuration * 0.125), 5) // 12.5% remaining, min 5s
 
 if (remaining > 0) {
   // Show countdown: MM:SS
   displayCountdown(Math.ceil(remaining))
-  // Color states: green → yellow (15s) → red (5s)
+  
+  // Color states based on remaining time:
+  if (remaining <= criticalThreshold) {
+    // Critical state (red) - play sound on transition
+    displayCritical()
+  } else if (remaining <= warningThreshold) {
+    // Warning state (yellow) - play sound on transition  
+    displayWarning()
+  } else {
+    // Normal state (green)
+    displayNormal()
+  }
 } else if (remaining <= 0 && remaining > -0.5) {
-  // Show "Time Expired" indicator
+  // Show "Time Expired" indicator - play sound
   displayExpired()
 } else {
   // Show over-time: +M:SS format in red
@@ -247,9 +292,13 @@ if (remaining > 0) {
 ```
 
 - Tick locally every 100ms for smooth animation
-- **Countdown state**: Green → Yellow (≤15s) → Red (≤5s)
+- **Countdown state**: 
+  - Normal (green): > 25% remaining
+  - Warning (yellow): ≤ 25% remaining
+  - Critical (red): ≤ 12.5% remaining (minimum 5 seconds)
 - **Expired state**: Red pulse with "⏰ Time Expired" message when reaching 0
 - **Over-time state**: Switch to "+M:SS" format (e.g., "+1:45"), distinct red visual state when negative
+- **Sound notifications**: Play at warning threshold, critical threshold, and expiry
 - No auto-advance — speaker stays active until they end their slot
 - Both countdown and over-time are computed and displayed client-side; cleared on slot end
 
@@ -330,6 +379,75 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 
 ---
 
+## 6. Local Storage Management
+
+### 6.1 Storage Keys
+
+```ts
+const STORAGE_KEYS = {
+  USER_NAME: 'ticktalk_userName',
+  SLOT_DURATION: 'ticktalk_slotDuration',
+  IS_CUSTOM_DURATION: 'ticktalk_isCustomDuration'
+}
+```
+
+### 6.2 Save Settings
+
+Save to local storage only on successful session creation or join:
+
+```ts
+function saveSettings(name: string, duration: number, isCustom: boolean) {
+  localStorage.setItem(STORAGE_KEYS.USER_NAME, name)
+  localStorage.setItem(STORAGE_KEYS.SLOT_DURATION, duration.toString())
+  localStorage.setItem(STORAGE_KEYS.IS_CUSTOM_DURATION, isCustom.toString())
+}
+```
+
+### 6.3 Load Settings
+
+Load from local storage on page mount:
+
+```ts
+function loadSettings() {
+  return {
+    userName: localStorage.getItem(STORAGE_KEYS.USER_NAME) || '',
+    slotDuration: parseInt(localStorage.getItem(STORAGE_KEYS.SLOT_DURATION) || '120'),
+    isCustomDuration: localStorage.getItem(STORAGE_KEYS.IS_CUSTOM_DURATION) === 'true'
+  }
+}
+```
+
+### 6.4 Focus Management
+
+```ts
+useEffect(() => {
+  const settings = loadSettings()
+  
+  // Pre-populate form fields
+  setName(settings.userName)
+  setDuration(settings.slotDuration)
+  setIsCustom(settings.isCustomDuration)
+  
+  // Focus management
+  if (settings.userName) {
+    // Returning user: focus on action button
+    actionButtonRef.current?.focus()
+  } else {
+    // First-time user: focus on name input
+    nameInputRef.current?.focus()
+  }
+}, [])
+```
+
+### 6.5 Storage Scope
+
+- Storage is per-browser, not per-user
+- Same settings shared across Home and Join pages
+- No explicit clear UI; users can clear via browser settings
+- Settings persist across sessions on same device/browser
+
+---
+
 ## 7. Component Breakdown
 
 ```
@@ -347,11 +465,13 @@ lib/
   firebase.ts              → Firebase app initialization
   session.ts               → Session CRUD operations + time tracking helpers
   auth.ts                  → Anonymous auth helper
+  storage.ts               → Local storage helpers for settings persistence
 
 hooks/
   useSession.ts            → Subscribe to session updates
   useTimer.ts              → Local countdown/over-time logic with display format
   useAuth.ts               → Current user identity
+  useLocalStorage.ts       → Hook for loading/saving settings with focus management
 ```
 
 ---
@@ -373,11 +493,17 @@ hooks/
 
 ## 9. UX Polish
 
-- 🔊 Sound notification when slot time expires
-- 🟡 Yellow timer background at ≤15s remaining
-- 🔴 Red timer background at ≤5s remaining
+- 🔊 Sound notifications:
+  - Warning threshold (25% remaining)
+  - Critical threshold (12.5% remaining, min 5s)
+  - Expired (time reached 0)
+- 🟢 Normal timer state: > 25% remaining
+- 🟡 Warning timer state: ≤ 25% remaining (percentage-based)
+- 🔴 Critical timer state: ≤ 12.5% remaining (percentage-based, min 5s)
 - Clear visual distinction between lobby / active / finished states
 - Mobile-responsive layout
+- Focus management for quick session start
+- MeetingControls visibility optimized for non-active participants
 - Keyboard shortcuts (future):
   - `Space` → End slot
   - `R` → Raise hand
@@ -388,7 +514,7 @@ hooks/
 
 See [docs/tasks.md](tasks.md) for the complete task list with tracking and status updates.
 
-All 32 tasks must be completed to achieve a production-ready MVP.
+All 38 tasks (REQ-0001 through REQ-0038) must be completed to achieve a production-ready MVP.
 
 ---
 
@@ -418,14 +544,19 @@ All 32 tasks must be completed to achieve a production-ready MVP.
 
 ## 13. Success Criteria
 
-At MVP completion (all 32 tasks marked ✅):
+At MVP completion (all 38 tasks marked ✅):
 
 - All core features functional (create, join, speak, timer with over-time, end meeting with warnings)
+- Custom duration selector with 10 options + custom input (30-3600s)
+- Local storage persistence for quick session start (name + duration)
+- Focus management for returning users (keyboard-only workflow)
+- Percentage-based timer thresholds (25% warning, 12.5% critical)
+- Sound notifications at warning, critical, and expired states
+- MeetingControls visibility optimized (hidden for non-active, non-host participants)
 - Speaking duration tracking and Meeting Summary view working
 - Host fully participates as speaker with same capabilities as participants
 - Firebase real-time sync working across participants
 - Over-time display and speaking time analytics working
 - Mobile-responsive UI with no critical layout issues
 - Edge cases handled (disconnects, concurrent actions, over-time scenarios)
-- Sound notification on timer expiry
 - Code ready for internal team testing
