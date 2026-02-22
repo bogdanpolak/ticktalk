@@ -34,13 +34,13 @@
 | REQ-0028 | Participant row total time badge | ✅ |
 | REQ-0029 | Single-turn session flow (no reset) | ✅ |
 | REQ-0030 | Meeting Summary overtime styling update | ✅ |
-| REQ-0031 | Custom duration selector with 10 options | ⬜ |
-| REQ-0032 | Custom duration input field with validation | ⬜ |
-| REQ-0033 | Local storage persistence for settings | ⬜ |
-| REQ-0034 | Pre-load settings on page load (Home & Join) | ⬜ |
-| REQ-0035 | Focus management for quick start UX | ⬜ |
-| REQ-0036 | Hide MeetingControls for non-active participants | ⬜ |
-| REQ-0037 | Percentage-based timer warning/critical thresholds | ⬜ |
+| REQ-0031 | Custom duration selector with 10 options | 🟨 |
+| REQ-0032 | Custom duration input field with validation | 🟨 |
+| REQ-0033 | Local storage persistence for settings | 🟨 |
+| REQ-0034 | Pre-load settings on page load (Home & Join) | 🟨 |
+| REQ-0035 | Focus management for quick start UX | 🟨 |
+| REQ-0036 | Hide MeetingControls for non-active participants | 🟨 |
+| REQ-0037 | Percentage-based timer warning/critical thresholds | 🟨 |
 | REQ-0038 | Sound notifications for warning/critical states | ⬜ |
 
 **Status Symbols**
