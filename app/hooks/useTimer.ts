@@ -9,6 +9,8 @@ interface TimerState {
   isActive: boolean
   isOverTime: boolean
   overTimeSeconds: number
+  isWarning: boolean
+  isCritical: boolean
 }
 
 function computeRemaining(slotEndsAt: number | null): number {
@@ -16,7 +18,7 @@ function computeRemaining(slotEndsAt: number | null): number {
   return Math.ceil((slotEndsAt - Date.now()) / 1000)
 }
 
-export function useTimer(slotEndsAt: number | null): TimerState {
+export function useTimer(slotEndsAt: number | null, slotDurationSeconds: number): TimerState {
   const [remaining, setRemaining] = useState<number>(() =>
     computeRemaining(slotEndsAt)
   )
@@ -69,6 +71,18 @@ export function useTimer(slotEndsAt: number | null): TimerState {
   const isExpired = isActive && remaining <= 0
   const isOverTime = isActive && remaining < 0
   const overTimeSeconds = isOverTime ? Math.abs(remaining) : 0
+  const warningThreshold = Math.ceil(slotDurationSeconds * 0.25)
+  const criticalThreshold = Math.max(Math.ceil(slotDurationSeconds * 0.125), 5)
+  const isWarning = isActive && remaining > 0 && remaining <= warningThreshold
+  const isCritical = isActive && remaining > 0 && remaining <= criticalThreshold
 
-  return { remaining, isExpired, isActive, isOverTime, overTimeSeconds }
+  return {
+    remaining,
+    isExpired,
+    isActive,
+    isOverTime,
+    overTimeSeconds,
+    isWarning,
+    isCritical
+  }
 }

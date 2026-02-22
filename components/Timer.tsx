@@ -8,13 +8,15 @@ function getTimerState(
   remaining: number,
   isActive: boolean,
   isExpired: boolean,
-  isOverTime: boolean
+  isOverTime: boolean,
+  isWarning: boolean,
+  isCritical: boolean
 ): TimerState {
   if (!isActive) return 'idle'
   if (isOverTime) return 'overtime'
   if (isExpired || remaining === 0) return 'expired'
-  if (remaining <= 5) return 'critical'
-  if (remaining <= 15) return 'warning'
+  if (isCritical) return 'critical'
+  if (isWarning) return 'warning'
   return 'normal'
 }
 
@@ -46,9 +48,16 @@ interface TimerProps {
 }
 
 export function Timer({ slotEndsAt, slotDurationSeconds }: TimerProps) {
-  const { remaining, isExpired, isOverTime, overTimeSeconds } = useTimer(slotEndsAt)
+  const {
+    remaining,
+    isExpired,
+    isOverTime,
+    overTimeSeconds,
+    isWarning,
+    isCritical
+  } = useTimer(slotEndsAt, slotDurationSeconds)
   const isActive = slotEndsAt !== null
-  const timerState = getTimerState(remaining, isActive, isExpired, isOverTime)
+  const timerState = getTimerState(remaining, isActive, isExpired, isOverTime, isWarning, isCritical)
 
   const ariaLabel = isActive
     ? timerState === 'overtime'

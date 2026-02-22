@@ -1,6 +1,6 @@
 # REQ-0037: Percentage-Based Timer Warning/Critical Thresholds
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: Medium (Timer Logic)
 **Dependencies**: REQ-0010, REQ-0009
 
@@ -14,11 +14,11 @@ Update timer logic to compute warning and critical states based on percentage of
 
 ## Acceptance Criteria
 
-- [ ] Warning threshold triggers at 25% time remaining.
-- [ ] Critical threshold triggers at 12.5% time remaining, with a minimum of 5 seconds.
-- [ ] Thresholds are computed from `slotDurationSeconds`.
-- [ ] Timer UI reflects new states with existing color rules.
-- [ ] Expired and over-time behavior remains unchanged.
+- [x] Warning threshold triggers at 25% time remaining.
+- [x] Critical threshold triggers at 12.5% time remaining, with a minimum of 5 seconds.
+- [x] Thresholds are computed from `slotDurationSeconds`.
+- [x] Timer UI reflects new states with existing color rules.
+- [x] Expired and over-time behavior remains unchanged.
 
 ---
 
@@ -64,7 +64,7 @@ Update timer logic to compute warning and critical states based on percentage of
 
 ## Completion Checklist
 
-- [ ] Percentage-based thresholds implemented.
-- [ ] UI state transitions align with thresholds.
-- [ ] No regressions in expired/over-time states.
-- [ ] `tasks.md` updated to ✅ when implemented.
+- [x] Percentage-based thresholds implemented.
+- [x] UI state transitions align with thresholds.
+- [x] No regressions in expired/over-time states.
+- [x] `tasks.md` updated to ✅ when implemented.
