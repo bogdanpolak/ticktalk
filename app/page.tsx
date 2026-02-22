@@ -5,11 +5,17 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import { createSession } from '@/lib/session'
 
-const DURATION_OPTIONS = [
-  { label: '1 minute', value: 60 },
-  { label: '2 minutes', value: 120 },
-  { label: '3 minutes', value: 180 },
-  { label: '5 minutes', value: 300 }
+const DURATION_OPTIONS: { label: string; value: number | 'custom' }[] = [
+  { label: '1:00', value: 60 },
+  { label: '1:15', value: 75 },
+  { label: '1:30', value: 90 },
+  { label: '1:45', value: 105 },
+  { label: '2:00', value: 120 },
+  { label: '2:15', value: 135 },
+  { label: '2:30', value: 150 },
+  { label: '2:45', value: 165 },
+  { label: '3:00', value: 180 },
+  { label: 'Custom...', value: 'custom' }
 ]
 
 export default function HomePage() {
@@ -18,6 +24,7 @@ export default function HomePage() {
 
   const [name, setName] = useState('')
   const [duration, setDuration] = useState(120) // Default: 2 minutes
+  const [isCustomDuration, setIsCustomDuration] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -164,8 +171,16 @@ export default function HomePage() {
             </label>
             <select
               id="duration"
-              value={duration}
-              onChange={e => setDuration(Number(e.target.value))}
+              value={isCustomDuration ? 'custom' : duration}
+              onChange={e => {
+                if (e.target.value === 'custom') {
+                  setIsCustomDuration(true)
+                  return
+                }
+
+                setIsCustomDuration(false)
+                setDuration(Number(e.target.value))
+              }}
               disabled={isCreating}
               style={{
                 width: '100%',

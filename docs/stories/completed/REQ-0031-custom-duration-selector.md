@@ -1,6 +1,6 @@
 # REQ-0031: Custom Duration Selector with 10 Options
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: High (Core UX)
 **Dependencies**: REQ-0005
 
@@ -14,12 +14,12 @@ Expand the session duration selector on the Home page to offer 9 fixed time opti
 
 ## Acceptance Criteria
 
-- [ ] Duration selector lists the 9 fixed options plus "Custom...".
-- [ ] Default selected value is 120 seconds (2:00).
-- [ ] Fixed options display human-readable labels (e.g., 75 seconds shown as 1:15).
-- [ ] Selecting a fixed option sets slot duration accordingly.
-- [ ] Selecting "Custom..." triggers the custom input field (handled in REQ-0032).
-- [ ] Existing layout and styling are preserved.
+- [x] Duration selector lists the 9 fixed options plus "Custom...".
+- [x] Default selected value is 120 seconds (2:00).
+- [x] Fixed options display human-readable labels (e.g., 75 seconds shown as 1:15).
+- [x] Selecting a fixed option sets slot duration accordingly.
+- [x] Selecting "Custom..." triggers the custom input field (handled in REQ-0032).
+- [x] Existing layout and styling are preserved.
 
 ---
 
@@ -76,7 +76,7 @@ Suggested options:
 
 ## Completion Checklist
 
-- [ ] Selector shows all required options.
-- [ ] Default is 120 seconds.
-- [ ] No layout regressions.
-- [ ] `tasks.md` updated to ✅ when implemented.
+- [x] Selector shows all required options.
+- [x] Default is 120 seconds.
+- [x] No layout regressions.
+- [x] `tasks.md` updated to ✅ when implemented.
