@@ -25,6 +25,8 @@ export default function HomePage() {
   const [name, setName] = useState('')
   const [duration, setDuration] = useState(120) // Default: 2 minutes
   const [isCustomDuration, setIsCustomDuration] = useState(false)
+  const [customDuration, setCustomDuration] = useState('120')
+  const [customDurationError, setCustomDurationError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,6 +40,19 @@ export default function HomePage() {
       return
     }
 
+    let slotDurationSeconds = duration
+    if (isCustomDuration) {
+      const parsedDuration = Number(customDuration)
+
+      if (!Number.isFinite(parsedDuration) || parsedDuration < 30 || parsedDuration > 3600) {
+        setCustomDurationError('Custom duration must be between 30 and 3600 seconds.')
+        return
+      }
+
+      setCustomDurationError(null)
+      slotDurationSeconds = parsedDuration
+    }
+
     if (!userId) {
       setError('Authentication failed. Please refresh the page.')
       return
@@ -48,7 +63,7 @@ export default function HomePage() {
       const sessionId = await createSession({
         hostId: userId,
         hostName: name,
-        slotDurationSeconds: duration
+        slotDurationSeconds
       })
 
       // Redirect to meeting page
@@ -175,11 +190,13 @@ export default function HomePage() {
               onChange={e => {
                 if (e.target.value === 'custom') {
                   setIsCustomDuration(true)
+                  setCustomDurationError(null)
                   return
                 }
 
                 setIsCustomDuration(false)
                 setDuration(Number(e.target.value))
+                setCustomDurationError(null)
               }}
               disabled={isCreating}
               style={{
@@ -213,6 +230,73 @@ export default function HomePage() {
               ))}
             </select>
           </div>
+
+          {isCustomDuration && (
+            <div>
+              <label htmlFor="custom-duration" style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 500,
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--spacing-s)'
+              }}>
+                Custom Duration (seconds)
+              </label>
+              <input
+                id="custom-duration"
+                type="number"
+                min={30}
+                max={3600}
+                step={1}
+                value={customDuration}
+                onChange={e => {
+                  setCustomDuration(e.target.value)
+                  setCustomDurationError(null)
+                }}
+                disabled={isCreating}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '10px var(--spacing-m)',
+                  height: '44px',
+                  border: `1px solid var(--color-border)`,
+                  borderRadius: '0px',
+                  fontSize: '14px',
+                  color: 'var(--color-text-primary)',
+                  background: 'var(--color-surface)',
+                  fontFamily: 'var(--font-sans)',
+                  outline: 'none',
+                  opacity: isCreating ? 0.5 : 1,
+                  cursor: isCreating ? 'not-allowed' : 'text',
+                  transition: 'all 150ms ease-out'
+                }}
+                onFocus={(e) => {
+                  e.target.style.outline = '2px solid var(--color-focus-ring)'
+                  e.target.style.outlineOffset = '0px'
+                }}
+                onBlur={(e) => {
+                  e.target.style.outline = 'none'
+                }}
+                required
+              />
+              <p style={{
+                fontSize: '12px',
+                color: 'var(--color-text-secondary)',
+                margin: 'var(--spacing-s) 0 0 0'
+              }}>
+                Enter custom duration in seconds (30-3600)
+              </p>
+              {customDurationError && (
+                <p style={{
+                  fontSize: '12px',
+                  color: 'var(--color-error)',
+                  margin: 'var(--spacing-s) 0 0 0'
+                }}>
+                  {customDurationError}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (

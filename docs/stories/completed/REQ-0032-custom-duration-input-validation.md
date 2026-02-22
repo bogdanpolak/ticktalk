@@ -1,6 +1,6 @@
 # REQ-0032: Custom Duration Input Field with Validation
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: High (Core UX)
 **Dependencies**: REQ-0031
 
@@ -14,12 +14,12 @@ Add a custom duration input that appears only when the duration selector is set 
 
 ## Acceptance Criteria
 
-- [ ] Custom input is only visible when "Custom..." is selected.
-- [ ] Input is pre-populated with 120 seconds or last custom value from local storage.
-- [ ] Helper text appears below the input: "Enter custom duration in seconds (30-3600)".
-- [ ] Validation runs on submit and blocks invalid values.
-- [ ] Valid range: 30 to 3600 seconds inclusive.
-- [ ] Error message is shown for invalid values and cleared when valid.
+- [x] Custom input is only visible when "Custom..." is selected.
+- [x] Input is pre-populated with 120 seconds or last custom value from local storage.
+- [x] Helper text appears below the input: "Enter custom duration in seconds (30-3600)".
+- [x] Validation runs on submit and blocks invalid values.
+- [x] Valid range: 30 to 3600 seconds inclusive.
+- [x] Error message is shown for invalid values and cleared when valid.
 
 ---
 
@@ -71,7 +71,7 @@ Add a custom duration input that appears only when the duration selector is set 
 
 ## Completion Checklist
 
-- [ ] Custom input only appears for "Custom...".
-- [ ] Helper and error text display correctly.
-- [ ] Validation blocks out-of-range values.
-- [ ] `tasks.md` updated to ✅ when implemented.
+- [x] Custom input only appears for "Custom...".
+- [x] Helper and error text display correctly.
+- [x] Validation blocks out-of-range values.
+- [x] `tasks.md` updated to ✅ when implemented.
