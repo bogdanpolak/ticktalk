@@ -1,6 +1,6 @@
 # REQ-0034: Pre-load Settings on Page Load (Home & Join)
 
-**Status**: 🟨 Requirements created
+**Status**: ✅ Completed
 **Priority**: Medium (UX)
 **Dependencies**: REQ-0033
 
@@ -14,11 +14,11 @@ On page load, pre-populate the name and duration controls using persisted settin
 
 ## Acceptance Criteria
 
-- [ ] Name input is pre-filled from local storage when available.
-- [ ] Duration selector reflects stored slot duration.
-- [ ] If stored duration was custom, selector shows "Custom..." and custom input is pre-filled.
-- [ ] If no stored settings exist, defaults are used (name empty, duration 120 seconds).
-- [ ] Behavior works on Home and Join pages.
+- [x] Name input is pre-filled from local storage when available.
+- [x] Duration selector reflects stored slot duration.
+- [x] If stored duration was custom, selector shows "Custom..." and custom input is pre-filled.
+- [x] If no stored settings exist, defaults are used (name empty, duration 120 seconds).
+- [x] Behavior works on Home and Join pages.
 
 ---
 
@@ -60,7 +60,7 @@ On page load, pre-populate the name and duration controls using persisted settin
 
 ## Completion Checklist
 
-- [ ] Settings pre-load on Home and Join.
-- [ ] Custom duration state restored correctly.
-- [ ] Defaults apply when storage is empty.
-- [ ] `tasks.md` updated to ✅ when implemented.
+- [x] Settings pre-load on Home and Join.
+- [x] Custom duration state restored correctly.
+- [x] Defaults apply when storage is empty.
+- [x] `tasks.md` updated to ✅ when implemented.
