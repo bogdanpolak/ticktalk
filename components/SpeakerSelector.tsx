@@ -34,11 +34,9 @@ export function SpeakerSelector({
   const [isSelecting, setIsSelecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const isCurrentSpeaker = currentUserId === activeSpeakerId
-  const noActiveSpeaker = !activeSpeakerId
-  const canSelect =
-    isCurrentSpeaker ||
-    (noActiveSpeaker && (isHost || currentUserId === lastEndedSpeakerId))
+  const isCurrentSpeaker = currentUserId === activeSpeakerId || currentUserId === lastEndedSpeakerId;
+  const noSpeakerStarted = !activeSpeakerId && spokenUserIds.length === 0;
+  const canSelect = isCurrentSpeaker || (isHost && noSpeakerStarted);
 
   const candidates = useMemo<CandidateEntry[]>(() => {
     return Object.entries(participants)
@@ -79,7 +77,7 @@ export function SpeakerSelector({
   return (
     <section className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-[8px] p-[var(--spacing-l)]">
       <h2 className="text-[18px] leading-[1.4] font-medium text-[var(--color-text-primary)]">
-        Select Next Speaker
+        {noSpeakerStarted ? 'Select First Speaker' : 'Select Next Speaker'}
       </h2>
       <p className="mt-[var(--spacing-xs)] text-[14px] leading-normal text-[var(--color-text-secondary)]">
         {eligibleCount} participant{eligibleCount !== 1 ? 's' : ''} remaining

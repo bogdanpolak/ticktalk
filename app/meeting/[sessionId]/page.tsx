@@ -300,8 +300,10 @@ function ActiveMeetingView({
   const isHost = userId === session.hostId
   const currentParticipant = session.participants?.[userId || '']
   const isHandRaised = currentParticipant?.isHandRaised ?? false
-  const isActiveSpeaker = userId === session.activeSpeakerId
-  const showMeetingControls = isHost || isActiveSpeaker
+  const numberOfParticipants = Object.keys(session.participants || {}).length;
+  const isLastSpeaker = numberOfParticipants === session.spokenUserIds?.length
+  const isActiveLastSpeaker = userId === session.activeSpeakerId && isLastSpeaker;
+  const showMeetingControls = isHost || isActiveLastSpeaker
 
   // Monitor for host changes
   useEffect(() => {
@@ -362,7 +364,8 @@ function ActiveMeetingView({
             currentUserId={userId}
             activeSpeakerId={session.activeSpeakerId ?? null}
             isHost={isHost}
-            isActiveSpeaker={isActiveSpeaker}
+            isActiveSpeaker={isActiveLastSpeaker}
+            isLastSpeaker={isLastSpeaker}
             isVisible={showMeetingControls}
             hasEligibleCandidates={Object.entries(session.participants).some(
               ([participantId]) =>
@@ -376,7 +379,7 @@ function ActiveMeetingView({
           <HandRaiseButton
             sessionId={sessionId}
             currentUserId={userId}
-            isActiveSpeaker={isActiveSpeaker}
+            isActiveSpeaker={isActiveLastSpeaker}
             isHandRaised={isHandRaised}
           />
 

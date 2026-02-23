@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { endCurrentSlot, endMeeting } from '@/lib/session'
+import { endLastSlot, endMeeting } from '@/lib/session'
 import { EndMeetingDialog } from '@/components/EndMeetingDialog'
 import type { Session } from '@/lib/session'
 
@@ -11,6 +11,7 @@ interface MeetingControlsProps {
   activeSpeakerId: string | null
   isHost: boolean
   isActiveSpeaker: boolean
+  isLastSpeaker: boolean
   isVisible: boolean
   hasEligibleCandidates: boolean
   participants: Session['participants']
@@ -24,6 +25,7 @@ export function MeetingControls({
   activeSpeakerId,
   isHost,
   isActiveSpeaker,
+  isLastSpeaker,
   isVisible,
   hasEligibleCandidates,
   participants,
@@ -46,7 +48,7 @@ export function MeetingControls({
     setIsEndingSlot(true)
 
     try {
-      await endCurrentSlot(sessionId)
+      await endLastSlot(sessionId)
       onSlotEnded?.(currentUserId)
     } catch (err) {
       setSlotError(err instanceof Error ? err.message : 'Failed to end slot')
@@ -82,10 +84,10 @@ export function MeetingControls({
   return (
     <section className="mt-[var(--spacing-m)] sm:mt-[var(--spacing-l)] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-[8px] p-[var(--spacing-m)] sm:p-[var(--spacing-l)]">
       <div className="flex flex-col gap-[var(--spacing-m)]">
-        {isActiveSpeaker && (
+        {isActiveSpeaker && isLastSpeaker && (
           <div className="flex flex-col gap-[var(--spacing-s)]">
             <p className="text-[13px] sm:text-[14px] leading-[1.5] text-[var(--color-text-secondary)]">
-              Ready to pass the floor to the next speaker?
+              Ready to close the session?
             </p>
             <button
               type="button"

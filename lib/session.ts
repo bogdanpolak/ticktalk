@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { ref, push, set, update, get, runTransaction, onDisconnect as onDisconnectRef, serverTimestamp } from 'firebase/database';
+import { ref, push, set, update, get, runTransaction, onDisconnect as onDisconnectRef, serverTimestamp, DatabaseReference } from 'firebase/database';
 
 // Types based on data model from plan
 export type SessionStatus = 'lobby' | 'active' | 'finished';
@@ -184,64 +184,8 @@ export async function endMeeting(sessionId: string): Promise<void> {
   });
 }
 
-/**
- * Select the next speaker using a transaction to prevent race conditions
- * Tracks who has spoken and resets when all participants have had a turn
- */
-export async function selectNextSpeaker(
-  sessionId: string,
-  nextSpeakerId: string
-): Promise<void> {
-  const sessionRef = ref(db, `sessions/${sessionId}`);
-  
-  await runTransaction(sessionRef, (session: Session | null) => {
-    if (!session) {
-      throw new Error('Session not found');
-    }
-    
-    // Ensure data structures exist
-    const spokenUserIds = session.spokenUserIds || [];
-    const participants = session.participants || {};
-    
-    // Validate: nextSpeakerId exists as participant
-    if (!participants[nextSpeakerId]) {
-      throw new Error(
-        `Participant ${nextSpeakerId} not found in session`
-      );
-    }
-    
-    // Validation: speaker hasn't already spoken in the session (no reset allowed)
-    if (spokenUserIds.includes(nextSpeakerId)) {
-      throw new Error(
-        `Participant ${nextSpeakerId} has already spoken in this session`
-      );
-    }
-    
-    // Set new active speaker
-    const now = Date.now();
-    session.activeSpeakerId = nextSpeakerId;
-    session.slotStartedAt = now;
-    session.slotEndsAt = now + session.slotDurationSeconds * 1000;
-    
-    // Add to spoken list (no reset - single-turn session)
-    const updatedSpokenUserIds = [...spokenUserIds, nextSpeakerId];
-    session.spokenUserIds = updatedSpokenUserIds;
-    
-    return session;
-  });
-}
 
-/**
- * End the current speaker's slot
- */
-export async function endCurrentSlot(sessionId: string): Promise<void> {
-  const sessionRef = ref(db, `sessions/${sessionId}`);
-
-  await runTransaction(sessionRef, (session: Session | null) => {
-    if (!session) {
-      throw new Error('Session not found');
-    }
-
+function endSlot(session: Session): void {
     const activeSpeakerId = session.activeSpeakerId;
     if (!activeSpeakerId) {
       throw new Error('No active speaker to end');
@@ -278,6 +222,74 @@ export async function endCurrentSlot(sessionId: string): Promise<void> {
     session.activeSpeakerId = null;
     session.slotEndsAt = null;
     session.slotStartedAt = null;
+}
+
+function switchToNextUser(session: Session, nextSpeakerId: string): void {
+    // Ensure data structures exist
+    const spokenUserIds = session.spokenUserIds || [];
+    const participants = session.participants || {};
+    
+    // Validate: nextSpeakerId exists as participant
+    if (!participants[nextSpeakerId]) {
+      throw new Error(
+        `Participant ${nextSpeakerId} not found in session`
+      );
+    }
+    
+    // Validation: speaker hasn't already spoken in the session (no reset allowed)
+    if (spokenUserIds.includes(nextSpeakerId)) {
+      throw new Error(
+        `Participant ${nextSpeakerId} has already spoken in this session`
+      );
+    }
+    
+    // Set new active speaker
+    const now = Date.now();
+    session.activeSpeakerId = nextSpeakerId;
+    session.slotStartedAt = now;
+    session.slotEndsAt = now + session.slotDurationSeconds * 1000;
+    
+    // Add to spoken list (no reset - single-turn session)
+    const updatedSpokenUserIds = [...spokenUserIds, nextSpeakerId];
+    session.spokenUserIds = updatedSpokenUserIds;
+}
+
+/**
+ * Select the next speaker using a transaction to prevent race conditions
+ * Tracks who has spoken and resets when all participants have had a turn
+ */
+export async function selectNextSpeaker(
+  sessionId: string,
+  nextSpeakerId: string
+): Promise<void> {
+  const sessionRef = ref(db, `sessions/${sessionId}`);
+  
+  await runTransaction(sessionRef, (session: Session | null) => {
+    if (!session) {
+      throw new Error('Session not found');
+    }
+    
+    if (session.activeSpeakerId) {
+      endSlot(session);
+    }
+    switchToNextUser(session, nextSpeakerId);
+    
+    return session;
+  });
+}
+
+/**
+ * End the last speaker's slot
+ */
+export async function endLastSlot(sessionId: string): Promise<void> {
+  const sessionRef: DatabaseReference = ref(db, `sessions/${sessionId}`);
+
+  await runTransaction(sessionRef, (session: Session | null) => {
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    endSlot(session);
 
     return session;
   });
