@@ -1,29 +1,21 @@
-import { auth } from './firebase';
-import { signInAnonymously, User } from 'firebase/auth';
+import type { User } from 'firebase/auth'
+import { authService } from '@/lib/services/authService'
 
-/**
- * Authenticate user anonymously
- * Returns the authenticated user
- */
 export async function authenticateAnonymously(): Promise<User> {
-  const userCredential = await signInAnonymously(auth);
-  return userCredential.user;
+  await authService.getCurrentUserId()
+  const user = authService.getCurrentUser()
+
+  if (!user) {
+    throw new Error('Authentication failed')
+  }
+
+  return user
 }
 
-/**
- * Get current authenticated user
- */
 export function getCurrentUser(): User | null {
-  return auth.currentUser;
+  return authService.getCurrentUser()
 }
 
-/**
- * Generate a unique user ID (uses Firebase Auth UID)
- */
 export async function getCurrentUserId(): Promise<string> {
-  const user = getCurrentUser();
-  if (user) return user.uid;
-  
-  const newUser = await authenticateAnonymously();
-  return newUser.uid;
+  return authService.getCurrentUserId()
 }
