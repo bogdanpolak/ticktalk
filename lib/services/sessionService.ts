@@ -10,6 +10,11 @@ import {
   serverTimestamp,
   type DatabaseReference
 } from 'firebase/database'
+import {
+  moveToNextSpeaker,
+  shouldPromoteNewHost,
+  validateSessionTransition
+} from '@/lib/sessionLogic'
 
 export type SessionStatus = 'lobby' | 'active' | 'finished'
 
@@ -115,27 +120,6 @@ function endSlot(session: Session): void {
   session.activeSpeakerId = null
   session.slotEndsAt = null
   session.slotStartedAt = null
-}
-
-function switchToNextUser(session: Session, nextSpeakerId: string): void {
-  const spokenUserIds = session.spokenUserIds || []
-  const participants = session.participants || {}
-
-  if (!participants[nextSpeakerId]) {
-    throw new Error(`Participant ${nextSpeakerId} not found in session`)
-  }
-
-  if (spokenUserIds.includes(nextSpeakerId)) {
-    throw new Error(`Participant ${nextSpeakerId} has already spoken in this session`)
-  }
-
-  const now = Date.now()
-  session.activeSpeakerId = nextSpeakerId
-  session.slotStartedAt = now
-  session.slotEndsAt = now + session.slotDurationSeconds * 1000
-
-  const updatedSpokenUserIds = [...spokenUserIds, nextSpeakerId]
-  session.spokenUserIds = updatedSpokenUserIds
 }
 
 const realSessionService: SessionService = {
@@ -248,12 +232,19 @@ const realSessionService: SessionService = {
         throw new Error('Session not found')
       }
 
-      if (session.activeSpeakerId) {
-        endSlot(session)
-      }
-      switchToNextUser(session, nextSpeakerId)
+      const current = { ...session }
 
-      return session
+      if (current.activeSpeakerId) {
+        endSlot(current)
+      }
+
+      const next = moveToNextSpeaker(current, nextSpeakerId)
+
+      if (!validateSessionTransition(session, next)) {
+        throw new Error('Invalid session transition while selecting next speaker')
+      }
+
+      return next
     })
   },
 
@@ -320,6 +311,10 @@ const realSessionService: SessionService = {
       }
 
       if (session.hostId !== currentHostId) {
+        return session
+      }
+
+      if (!shouldPromoteNewHost(session)) {
         return session
       }
 
