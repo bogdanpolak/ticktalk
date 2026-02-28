@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { playTimerExpiredSound } from '@/lib/audio'
+import { computeTimerState } from '@/lib/sessionLogic'
+import { audioService as defaultAudioService, type AudioService } from '@/lib/services/audioService'
+import { timeService as defaultTimeService, type TimeService } from '@/lib/services/timeService'
 
 interface TimerState {
   remaining: number
@@ -13,14 +15,21 @@ interface TimerState {
   isCritical: boolean
 }
 
-function computeRemaining(slotEndsAt: number | null): number {
-  if (slotEndsAt === null) return 0
-  return Math.ceil((slotEndsAt - Date.now()) / 1000)
+interface UseTimerOptions {
+  audioService?: AudioService
+  timeService?: TimeService
 }
 
-export function useTimer(slotEndsAt: number | null, slotDurationSeconds: number): TimerState {
+export function useTimer(
+  slotEndsAt: number | null,
+  slotDurationSeconds: number,
+  options: UseTimerOptions = {}
+): TimerState {
+  const audioService = options.audioService ?? defaultAudioService
+  const timeService = options.timeService ?? defaultTimeService
+
   const [remaining, setRemaining] = useState<number>(() =>
-    computeRemaining(slotEndsAt)
+    timeService.computeRemainingSeconds(slotEndsAt)
   )
   const [hasPlayedSound, setHasPlayedSound] = useState(false)
 
@@ -32,44 +41,45 @@ export function useTimer(slotEndsAt: number | null, slotDurationSeconds: number)
       return
     }
 
-    const initial = computeRemaining(slotEndsAt)
+    const initial = timeService.computeRemainingSeconds(slotEndsAt)
     setRemaining(initial)
 
     if (initial <= 0 && !hasPlayedSound) {
-      playTimerExpiredSound()
+      audioService.playTimerExpiredSound()
       setHasPlayedSound(true)
     }
 
-    const intervalId = setInterval(() => {
-      const newRemaining = computeRemaining(slotEndsAt)
+    const intervalId = timeService.setInterval(() => {
+      const newRemaining = timeService.computeRemainingSeconds(slotEndsAt)
       setRemaining(newRemaining)
 
       // Play sound once when timer reaches zero
       if (newRemaining <= 0 && !hasPlayedSound) {
-        playTimerExpiredSound()
+        audioService.playTimerExpiredSound()
         setHasPlayedSound(true)
       }
     }, 1000)
 
     return () => {
-      clearInterval(intervalId)
+      timeService.clearInterval(intervalId)
     }
-  }, [slotEndsAt, hasPlayedSound])
+  }, [slotEndsAt, hasPlayedSound, audioService, timeService])
 
   // Sync remaining with slotEndsAt changes outside of effect
   useEffect(() => {
-    const newRemaining = computeRemaining(slotEndsAt)
+    const newRemaining = timeService.computeRemainingSeconds(slotEndsAt)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRemaining(newRemaining)
     // Reset sound flag when timer restarts
     if (newRemaining > 0) {
       setHasPlayedSound(false)
     }
-  }, [slotEndsAt])
+  }, [slotEndsAt, timeService])
 
   const isActive = slotEndsAt !== null
-  const isExpired = isActive && remaining <= 0
-  const isOverTime = isActive && remaining < 0
+  const timerState = computeTimerState(remaining, slotDurationSeconds)
+  const isExpired = isActive && timerState.isExpired
+  const isOverTime = isActive && timerState.isOvertime
   const overTimeSeconds = isOverTime ? Math.abs(remaining) : 0
   const warningThreshold = Math.ceil(slotDurationSeconds * 0.25)
   const criticalThreshold = Math.max(Math.ceil(slotDurationSeconds * 0.125), 5)

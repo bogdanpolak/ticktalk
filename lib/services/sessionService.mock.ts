@@ -68,6 +68,10 @@ export function createMockSessionService(
       consumeArgs(args)
       return () => undefined
     },
+    subscribeSession(...args: [string, (session: Session | null) => void, ((error: Error) => void)?]): () => void {
+      consumeArgs(args)
+      return () => undefined
+    },
     async promoteHostOnDisconnect(...args: [string, string]): Promise<void> {
       consumeArgs(args)
       return notImplemented('promoteHostOnDisconnect')

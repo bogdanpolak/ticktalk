@@ -5,6 +5,7 @@ import {
   set,
   update,
   get,
+  onValue,
   runTransaction,
   onDisconnect as onDisconnectRef,
   serverTimestamp,
@@ -80,6 +81,11 @@ export interface SessionService {
   removeParticipant(sessionId: string, userId: string): Promise<void>
   promoteToHost(sessionId: string, userId: string): Promise<void>
   monitorPresence(sessionId: string, userId: string): () => void
+  subscribeSession(
+    sessionId: string,
+    onData: (session: Session | null) => void,
+    onError?: (error: Error) => void
+  ): () => void
   promoteHostOnDisconnect(sessionId: string, currentHostId: string): Promise<void>
 }
 
@@ -300,6 +306,27 @@ const realSessionService: SessionService = {
     return () => {
       set(presenceRef, null)
     }
+  },
+
+  subscribeSession(sessionId, onData, onError) {
+    const sessionRef = ref(db, `sessions/${sessionId}`)
+
+    return onValue(
+      sessionRef,
+      snapshot => {
+        if (!snapshot.exists()) {
+          onData(null)
+          return
+        }
+
+        onData(snapshot.val() as Session)
+      },
+      error => {
+        if (onError) {
+          onError(error)
+        }
+      }
+    )
   },
 
   async promoteHostOnDisconnect(sessionId, currentHostId) {
