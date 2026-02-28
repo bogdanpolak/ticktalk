@@ -44,7 +44,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  vi.runOnlyPendingTimers();
-  vi.useRealTimers();
+  if (vi.isFakeTimers()) {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  }
   vi.restoreAllMocks();
 });

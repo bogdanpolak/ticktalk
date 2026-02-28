@@ -46,6 +46,8 @@ export function createMockSession(overrides: Partial<Session> = {}): Session {
     [MOCK_HOST_ID]: createMockParticipant({ name: 'Host', role: 'host' }),
     [MOCK_PARTICIPANT_ID]: createMockParticipant({ name: 'Participant 1' })
   }
+  const spokenUserIds = overrides.spokenUserIds ?? []
+  const participants = overrides.participants ?? defaultParticipants
 
   return {
     hostId: MOCK_HOST_ID,
@@ -55,11 +57,9 @@ export function createMockSession(overrides: Partial<Session> = {}): Session {
     activeSpeakerId: null,
     slotEndsAt: null,
     slotStartedAt: null,
-    spokenUserIds: [],
-    participants: defaultParticipants,
     ...overrides,
-    spokenUserIds: overrides.spokenUserIds ?? [],
-    participants: overrides.participants ?? defaultParticipants
+    spokenUserIds,
+    participants
   }
 }
 
