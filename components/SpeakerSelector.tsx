@@ -1,7 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { selectNextSpeaker } from '@/lib/session'
+import {
+  sessionService as defaultSessionService,
+  type SessionService
+} from '@/lib/services/sessionService'
 import type { Participant } from '@/lib/session'
 
 interface SpeakerSelectorProps {
@@ -12,6 +15,7 @@ interface SpeakerSelectorProps {
   activeSpeakerId: string | null
   isHost: boolean
   lastEndedSpeakerId?: string | null
+  sessionService?: Pick<SessionService, 'selectNextSpeaker'>
 }
 
 interface CandidateEntry {
@@ -29,7 +33,8 @@ export function SpeakerSelector({
   currentUserId,
   activeSpeakerId,
   isHost,
-  lastEndedSpeakerId
+  lastEndedSpeakerId,
+  sessionService = defaultSessionService
 }: SpeakerSelectorProps) {
   const [isSelecting, setIsSelecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,7 +71,7 @@ export function SpeakerSelector({
     setIsSelecting(true)
 
     try {
-      await selectNextSpeaker(sessionId, nextSpeakerId)
+      await sessionService.selectNextSpeaker(sessionId, nextSpeakerId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to select speaker')
     } finally {
