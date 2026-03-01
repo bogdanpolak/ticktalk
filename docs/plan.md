@@ -1,6 +1,6 @@
 # Tick-Talk — Implementation Plan
 
-> Updated: February 2026
+> Updated: March 2026
 > Based on PRD + tech architecture decisions
 
 ---
@@ -17,15 +17,18 @@ Firebase Realtime Database
 
 ### Stack
 
-| Layer      | Technology                        |
-| ---------- | --------------------------------- |
-| Frontend   | Next.js 16 (App Router), React 19 |
-| Styling    | Tailwind CSS 4                    |
-| State      | React `useState` / `useEffect`   |
-| Realtime   | Firebase Realtime Database SDK    |
-| Auth       | Firebase Anonymous Auth (MVP)     |
-| Hosting    | Vercel (free tier)                |
-| Database   | Firebase Realtime Database        |
+| Layer          | Technology                                                        |
+| -------------- | ----------------------------------------------------------------- |
+| Frontend       | Next.js 16 (App Router), React 19                                 |
+| Styling        | Tailwind CSS 4                                                    |
+| State          | React `useState` / `useEffect`                                    |
+| Business Logic | `lib/sessionLogic.ts` — pure functions, zero Firebase dependencies |
+| Service Layer  | `lib/services/` — typed interfaces over Firebase & browser APIs   |
+| Realtime       | Firebase Realtime Database SDK                                    |
+| Auth           | Firebase Anonymous Auth (MVP)                                     |
+| Hosting        | Vercel (free tier)                                                |
+| Database       | Firebase Realtime Database                                        |
+| Testing        | Vitest 4.x, @testing-library/react, jest-mock-extended            |
 
 No custom backend server. Firebase handles real-time sync, state persistence, and concurrency via transactions.
 
@@ -38,12 +41,21 @@ No custom backend server. Firebase handles real-time sync, state persistence, an
 ```json
 sessions/{sessionId}: {
   hostId: string,
+  createdAt: number,                   // Unix timestamp (ms) — set once at creation
   slotDurationSeconds: number,
   status: "lobby" | "active" | "finished",
   activeSpeakerId: string | null,
   slotEndsAt: number | null,          // Unix timestamp (ms)
   slotStartedAt: number | null,       // Unix timestamp (ms) when current speaker started
   spokenUserIds: string[],
+  previousHostId: string | null,      // userId of previous host (set on host promotion)
+  hostChangedAt: number | null,       // Unix timestamp (ms) of last host promotion
+  presence: {
+    [userId]: {
+      lastSeen: number,               // SERVER_TIMESTAMP on connect
+      status: "online" | "offline"
+    }
+  },
   participants: {
     [userId]: {
       name: string,
@@ -67,8 +79,11 @@ sessions/{sessionId}: {
 - `spokenUserIds` tracks who has already spoken in the session (no multi-round reset).
 - `slotEndsAt` is authoritative — clients compute countdown locally and display over-time if exceeded.
 - `slotStartedAt` marks when current speaker's slot began (set on speaker selection).
+- `createdAt` is set once at session creation; never mutated.
 - `totalSpokeDurationSeconds` accumulates across the session, never resets.
 - `speakingHistory` records each individual speak slot with start/end/duration for analytics.
+- `presence` tracks real-time online/offline state per participant; managed by `monitorPresence()`. Each client writes `online` on connect and `null` on disconnect via `onDisconnect().remove()`.
+- `previousHostId` and `hostChangedAt` are written when host promotion occurs via `promoteHostOnDisconnect()`.
 - Timer expiry shows an indicator but does NOT auto-advance; over-time display shows if speaker exceeds slot duration.
 - Speaker manually ends slot; system calculates actual duration and stores in history.
 
@@ -163,17 +178,30 @@ Single page with conditional rendering based on `session.status`:
 
 ### 4.1 Session Creation (Host)
 
+> **Note:** All Firebase operations are now encapsulated inside `lib/services/sessionService.ts`. Application code calls `sessionService.createSession()`, `sessionService.selectNextSpeaker()`, etc. — never the Firebase SDK directly. The snippets below document the underlying logic.
+
 ```ts
 const sessionId = push(ref(db, 'sessions')).key
 set(ref(db, `sessions/${sessionId}`), {
   hostId: currentUserId,
+  createdAt: Date.now(),
   slotDurationSeconds: slotDuration,
   status: 'lobby',
   activeSpeakerId: null,
   slotEndsAt: null,
+  slotStartedAt: null,
   spokenUserIds: [],
+  previousHostId: null,
+  hostChangedAt: null,
+  presence: {},
   participants: {
-    [currentUserId]: { name, role: 'host', isHandRaised: false }
+    [currentUserId]: {
+      name: name.trim(),
+      role: 'host',
+      isHandRaised: false,
+      totalSpokeDurationSeconds: 0,
+      speakingHistory: []
+    }
   }
 })
 ```
@@ -181,18 +209,26 @@ set(ref(db, `sessions/${sessionId}`), {
 ### 4.2 Joining Session (Participant)
 
 ```ts
+const trimmedName = name.trim()
+if (!trimmedName) throw new Error('Participant name is required')
+
 set(ref(db, `sessions/${sessionId}/participants/${userId}`), {
-  name,
+  name: trimmedName,
   role: 'participant',
-  isHandRaised: false
+  isHandRaised: false,
+  totalSpokeDurationSeconds: 0,
+  speakingHistory: []
 })
 ```
 
 ### 4.3 Real-Time Subscription
 
+The subscription is delegated to `sessionService.subscribeSession(sessionId, onData, onError)`, which returns an unsubscribe function. The raw Firebase `onValue` code now lives only inside `sessionService.ts`:
+
 ```ts
+// Inside sessionService.subscribeSession():
 onValue(ref(db, `sessions/${sessionId}`), (snapshot) => {
-  setSession(snapshot.val())
+  onData(snapshot.val())
 })
 ```
 
@@ -224,27 +260,28 @@ Transaction ensures only one concurrent selection succeeds. Host can select them
 
 ### 4.5 End Slot
 
+End slot is executed as a single atomic `runTransaction` (not two separate `update()` calls) to ensure the participant history update and session field clear happen together:
+
 ```ts
-const now = Date.now()
-const durationMs = now - session.slotStartedAt
-const durationSeconds = Math.round(durationMs / 1000)
+runTransaction(ref(db, `sessions/${sessionId}`), (session) => {
+  if (!session) return session
+  const now = Date.now()
+  const slotStartedAt = session.slotStartedAt ?? now
+  const durationSeconds = Math.round((now - slotStartedAt) / 1000)
+  const speaker = session.participants[activeSpeakerId]
 
-update(ref(db, `sessions/${sessionId}/participants/${activeSpeakerId}`), {
-  totalSpokeDurationSeconds: (participant.totalSpokeDurationSeconds || 0) + durationSeconds,
-  speakingHistory: [
-    ...participant.speakingHistory,
-    {
-      startTime: session.slotStartedAt,
-      endTime: now,
-      durationSeconds: durationSeconds
-    }
-  ]
-})
-
-update(ref(db, `sessions/${sessionId}`), {
-  activeSpeakerId: null,
-  slotEndsAt: null,
-  slotStartedAt: null
+  session.participants[activeSpeakerId] = {
+    ...speaker,
+    totalSpokeDurationSeconds: (speaker.totalSpokeDurationSeconds || 0) + durationSeconds,
+    speakingHistory: [
+      ...(speaker.speakingHistory || []),
+      { startTime: slotStartedAt, endTime: now, durationSeconds }
+    ]
+  }
+  session.activeSpeakerId = null
+  session.slotEndsAt = null
+  session.slotStartedAt = null
+  return session
 })
 ```
 
@@ -292,13 +329,15 @@ if (remaining > 0) {
 ```
 
 - Tick locally every 100ms for smooth animation
+- Timer math (`computeRemainingSeconds`, `computeTimerState`) is implemented as pure functions in `lib/sessionLogic.ts` and consumed by `useTimer` via `timeService`
+- `Date.now()` and interval management are abstracted through `timeService` (enables fake-timer testing)
 - **Countdown state**: 
   - Normal (green): > 25% remaining
   - Warning (yellow): ≤ 25% remaining
   - Critical (red): ≤ 12.5% remaining (minimum 5 seconds)
 - **Expired state**: Red pulse with "⏰ Time Expired" message when reaching 0
 - **Over-time state**: Switch to "+M:SS" format (e.g., "+1:45"), distinct red visual state when negative
-- **Sound notifications**: Play at warning threshold, critical threshold, and expiry
+- **Sound notifications**: Play at warning threshold, critical threshold, and expiry via `audioService`
 - No auto-advance — speaker stays active until they end their slot
 - Both countdown and over-time are computed and displayed client-side; cleared on slot end
 
@@ -346,6 +385,23 @@ function endMeeting() {
 - Dialog is dismissible; user can cancel or confirm
 - No override needed — all participants can see who hasn't spoken via indicators
 
+### 4.9 Presence Tracking & Host Promotion
+
+**`monitorPresence(sessionId, userId)`** — called on meeting page mount:
+- Writes `{ lastSeen: serverTimestamp(), status: 'online' }` to `sessions/{sessionId}/presence/{userId}`
+- Registers `onDisconnect().remove()` on the same ref so the node is deleted automatically on disconnect
+- Returns a cleanup function that explicitly sets presence to `null`
+
+**`promoteHostOnDisconnect(sessionId, disconnectedHostId)`** — called when host disconnect is detected:
+- Runs a `runTransaction` on the session root
+- Aborts (no-op) if `presence[disconnectedHostId].status` is still `'online'`
+- Picks candidate: alphabetically-first `userId` (excluding `disconnectedHostId`) among participants
+- Writes: `session.hostId = candidateId`, `session.participants[candidateId].role = 'host'`, `session.previousHostId = disconnectedHostId`, `session.hostChangedAt = Date.now()`
+
+**`shouldPromoteNewHost(session, hostId)`** — pure function in `lib/sessionLogic.ts`:
+- Returns `true` when host entry is absent from `participants`, or when `presence[hostId].status === 'offline'`
+- Returns `false` when no other participants exist as promotion candidates
+
 ---
 
 ## 5. Firebase Configuration
@@ -383,45 +439,39 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 
 ### 6.1 Storage Keys
 
-```ts
-const STORAGE_KEYS = {
-  USER_NAME: 'ticktalk_userName',
-  SLOT_DURATION: 'ticktalk_slotDuration',
-  IS_CUSTOM_DURATION: 'ticktalk_isCustomDuration'
-}
-```
+Storage key constants are encapsulated within `storageService` (`lib/services/storageService.ts`) and not exported directly. Internally they map to:
+- `ticktalk_userName`
+- `ticktalk_slotDuration`
+- `ticktalk_isCustomDuration`
 
 ### 6.2 Save Settings
 
-Save to local storage only on successful session creation or join:
+Save to local storage only on successful session creation or join. Delegated to `storageService`:
 
 ```ts
-function saveSettings(name: string, duration: number, isCustom: boolean) {
-  localStorage.setItem(STORAGE_KEYS.USER_NAME, name)
-  localStorage.setItem(STORAGE_KEYS.SLOT_DURATION, duration.toString())
-  localStorage.setItem(STORAGE_KEYS.IS_CUSTOM_DURATION, isCustom.toString())
-}
+storageService.saveSettings(name, duration, isCustom)
 ```
+
+The implementation lives in `lib/services/storageService.ts`.
 
 ### 6.3 Load Settings
 
-Load from local storage on page mount:
+Load from local storage on page mount. Delegated to `storageService`:
 
 ```ts
-function loadSettings() {
-  return {
-    userName: localStorage.getItem(STORAGE_KEYS.USER_NAME) || '',
-    slotDuration: parseInt(localStorage.getItem(STORAGE_KEYS.SLOT_DURATION) || '120'),
-    isCustomDuration: localStorage.getItem(STORAGE_KEYS.IS_CUSTOM_DURATION) === 'true'
-  }
-}
+const settings = storageService.loadSettings()
+// returns StoredSettings: { userName, slotDuration, isCustomDuration }
 ```
+
+`StoredSettings` is exported from `lib/services/storageService.ts`. The implementation is SSR-safe (guards for `typeof window === 'undefined'`).
+
+> **Note:** `hasStoredName` is computed as `userName.trim().length > 0`. A stored value of only whitespace is equivalent to an empty name for focus management and pre-fill purposes.
 
 ### 6.4 Focus Management
 
 ```ts
 useEffect(() => {
-  const settings = loadSettings()
+  const settings = storageService.loadSettings()
   
   // Pre-populate form fields
   setName(settings.userName)
@@ -429,11 +479,11 @@ useEffect(() => {
   setIsCustom(settings.isCustomDuration)
   
   // Focus management
-  if (settings.userName) {
+  if (settings.userName.trim()) {
     // Returning user: focus on action button
     actionButtonRef.current?.focus()
   } else {
-    // First-time user: focus on name input
+    // First-time user (or whitespace-only stored name): focus on name input
     nameInputRef.current?.focus()
   }
 }, [])
@@ -453,24 +503,41 @@ useEffect(() => {
 ```
 components/
   Timer.tsx                → Countdown + over-time display with color states
-  ParticipantList.tsx      → List with status + total time badge (includes active speaker)
-  SpeakerSelector.tsx      → Pick next speaker from eligible list (host + active speaker)
-  HandRaiseButton.tsx      → Toggle hand raise
-  MeetingControls.tsx      → Host/speaker action buttons
+  ParticipantList.tsx      → List with status + total time badge; sorted: active speaker first, then hand-raised (alpha), then others (alpha)
+  SpeakerSelector.tsx      → Pick next speaker from eligible list; accepts optional sessionService for DI
+  HandRaiseButton.tsx      → Toggle hand raise; accepts optional sessionService for DI
+  MeetingControls.tsx      → Host/speaker action buttons; accepts optional sessionService for DI
   MeetingSummary.tsx       → Finished state view with speaking times + overtime indicator
   EndMeetingDialog.tsx     → Confirmation modal for unspoken participants warning
   LobbyView.tsx            → Pre-meeting waiting room
 
 lib/
   firebase.ts              → Firebase app initialization
-  session.ts               → Session CRUD operations + time tracking helpers
-  auth.ts                  → Anonymous auth helper
-  storage.ts               → Local storage helpers for settings persistence
+  session.ts               → Facade — re-exports types, delegates to lib/services/sessionService
+  sessionLogic.ts          → Pure logic functions (no Firebase): moveToNextSpeaker, computeRemainingSeconds,
+                             computeTimerState, buildParticipantRows, validateSessionTransition,
+                             shouldPromoteNewHost
+  auth.ts                  → Facade — re-exports helpers, delegates to lib/services/authService
+  storage.ts               → Local storage helpers (delegates to lib/services/storageService)
+  audio.ts                 → Audio helpers (delegates to lib/services/audioService)
+  services/
+    sessionService.ts      → Firebase session operations (sole owner of session Firebase calls)
+    sessionService.mock.ts → Mock factory for testing (createMockSessionService)
+    authService.ts         → Firebase anonymous auth operations
+    authService.mock.ts    → Mock factory for testing (createMockAuthService)
+    storageService.ts      → SSR-safe localStorage abstraction; exports StoredSettings type
+    audioService.ts        → HTML5 Audio abstraction; AudioService.setEnabled() for test silence
+    timeService.ts         → Abstracts Date.now(), setInterval/clearInterval, computeRemainingSeconds()
+    index.ts               → Central re-export for all service interfaces and mocks
+  __tests__/
+    setup.ts               → Global Vitest setup (fake timers, localStorage mock, Audio mock)
+    mocks.ts               → Shared mock factories for services, session data, and browser APIs
 
-hooks/
-  useSession.ts            → Subscribe to session updates
-  useTimer.ts              → Local countdown/over-time logic with display format
-  useAuth.ts               → Current user identity
+hooks/ (app/hooks/)
+  useSession.ts            → Subscribe to session updates via sessionService.subscribeSession();
+                             accepts optional { sessionService } for testability
+  useTimer.ts              → Local countdown/over-time logic; accepts optional { audioService, timeService }
+  useAuth.ts               → Current user identity; accepts optional { authService }
   useLocalStorage.ts       → Hook for loading/saving settings with focus management
 ```
 
@@ -480,9 +547,9 @@ hooks/
 
 | Case                          | Handling                                                   |
 | ----------------------------- | ---------------------------------------------------------- |
-| Active speaker disconnects    | Host selects next speaker from unspoken participants       |
-| Host disconnects              | Promote first participant to host role                     |
-| Two users select next speaker | Firebase transaction — only first one succeeds             |
+| Active speaker disconnects    | Host selects next speaker from unspoken participants                                              |
+| Host disconnects              | `promoteHostOnDisconnect` runs a Firebase transaction; promotes alphabetically-first participant (by userId) with non-offline presence; records `previousHostId` + `hostChangedAt` |
+| Two users select next speaker | Firebase transaction — only first one succeeds                                                    |
 | Timer drift across clients    | Server-authoritative `slotEndsAt`, clients compute locally |
 | All participants have spoken  | Prevent selection; host ends meeting                       |
 | Speaker exceeds time limit    | Timer shows "Time Expired"; summary shows overtime indicator |
@@ -515,6 +582,8 @@ hooks/
 See [docs/tasks.md](tasks.md) for the complete task list with tracking and status updates.
 
 All 38 tasks (REQ-0001 through REQ-0038) must be completed to achieve a production-ready MVP.
+
+Unit test implementation is tracked separately in [docs/unit-tests-plan-v2.md](unit-tests-plan-v2.md). Commits `9ce4d1b` through `5b0d188` implement Phase 1 (service abstractions + pure logic extraction) and Tiers 1–3 of the test suite.
 
 ---
 
@@ -560,3 +629,5 @@ At MVP completion (all 38 tasks marked ✅):
 - Mobile-responsive UI with no critical layout issues
 - Edge cases handled (disconnects, concurrent actions, over-time scenarios)
 - Code ready for internal team testing
+- Unit test coverage: lines/functions/statements ≥ 80%, branches ≥ 75% (`npm run test:coverage`)
+- Unit test suite: Tier 1 (utilities), Tier 2 (hooks), and Tier 3 (business logic) all passing

@@ -1,7 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { endLastSlot, endMeeting } from '@/lib/session'
+import {
+  sessionService as defaultSessionService,
+  type SessionService
+} from '@/lib/services/sessionService'
 import { EndMeetingDialog } from '@/components/EndMeetingDialog'
 import type { Session } from '@/lib/session'
 
@@ -17,6 +20,7 @@ interface MeetingControlsProps {
   participants: Session['participants']
   spokenUserIds: string[]
   onSlotEnded?: (speakerId: string | null) => void
+  sessionService?: Pick<SessionService, 'endLastSlot' | 'endMeeting'>
 }
 
 export function MeetingControls({
@@ -30,7 +34,8 @@ export function MeetingControls({
   hasEligibleCandidates,
   participants,
   spokenUserIds,
-  onSlotEnded
+  onSlotEnded,
+  sessionService = defaultSessionService
 }: MeetingControlsProps) {
   const [isEndingSlot, setIsEndingSlot] = useState(false)
   const [slotError, setSlotError] = useState<string | null>(null)
@@ -48,7 +53,7 @@ export function MeetingControls({
     setIsEndingSlot(true)
 
     try {
-      await endLastSlot(sessionId)
+      await sessionService.endLastSlot(sessionId)
       onSlotEnded?.(currentUserId)
     } catch (err) {
       setSlotError(err instanceof Error ? err.message : 'Failed to end slot')
@@ -60,7 +65,7 @@ export function MeetingControls({
     setMeetingError(null)
     setIsEndingMeeting(true)
     try {
-      await endMeeting(sessionId)
+      await sessionService.endMeeting(sessionId)
       setIsDialogOpen(false)
     } catch (err) {
       setMeetingError(err instanceof Error ? err.message : 'Failed to end meeting')

@@ -1,20 +1,25 @@
 'use client'
 
 import { useState } from 'react'
-import { toggleHandRaise } from '@/lib/session'
+import {
+  sessionService as defaultSessionService,
+  type SessionService
+} from '@/lib/services/sessionService'
 
 interface HandRaiseButtonProps {
   sessionId: string
   currentUserId: string | null
   isActiveSpeaker: boolean
   isHandRaised: boolean
+  sessionService?: Pick<SessionService, 'toggleHandRaise'>
 }
 
 export function HandRaiseButton({
   sessionId,
   currentUserId,
   isActiveSpeaker,
-  isHandRaised
+  isHandRaised,
+  sessionService = defaultSessionService
 }: HandRaiseButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +34,7 @@ export function HandRaiseButton({
     setIsLoading(true)
 
     try {
-      await toggleHandRaise(sessionId, currentUserId)
+      await sessionService.toggleHandRaise(sessionId, currentUserId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle hand raise')
     } finally {

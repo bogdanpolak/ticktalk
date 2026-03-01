@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ref, onValue } from 'firebase/database'
-import { db } from '@/lib/firebase'
-import { Session, monitorPresence } from '@/lib/session'
+import type { Session } from '@/lib/session'
+import {
+  sessionService as defaultSessionService,
+  type SessionService
+} from '@/lib/services/sessionService'
 
 interface SessionState {
   session: Session | null
@@ -12,7 +14,16 @@ interface SessionState {
   speakerDisconnected: boolean
 }
 
-export function useSession(sessionId: string | null, userId: string | null = null): SessionState {
+interface UseSessionOptions {
+  sessionService?: SessionService
+}
+
+export function useSession(
+  sessionId: string | null,
+  userId: string | null = null,
+  options: UseSessionOptions = {}
+): SessionState {
+  const sessionService = options.sessionService ?? defaultSessionService
   const [state, setState] = useState<SessionState>({
     session: null,
     isLoading: true,
@@ -20,62 +31,54 @@ export function useSession(sessionId: string | null, userId: string | null = nul
     speakerDisconnected: false
   })
 
-  // Set up presence monitoring for current user
   useEffect(() => {
     if (!sessionId || !userId) return
 
-    const cleanup = monitorPresence(sessionId, userId)
+    const cleanup = sessionService.monitorPresence(sessionId, userId)
     return cleanup
-  }, [sessionId, userId])
+  }, [sessionId, userId, sessionService])
 
   useEffect(() => {
-    // If no sessionId provided, reset state and early return
     if (!sessionId) {
       return
     }
 
-    const sessionRef = ref(db, `sessions/${sessionId}`)
-
     let isCurrentSubscription = true
     let prevHostId: string | null = null
 
-    const unsubscribe = onValue(
-      sessionRef,
-      snapshot => {
+    const unsubscribe = sessionService.subscribeSession(
+      sessionId,
+      session => {
         if (!isCurrentSubscription) return
 
-        if (snapshot.exists()) {
-          const session = snapshot.val() as Session
-          
-          // Check for host change (disconnect scenario)
-          if (prevHostId !== null && prevHostId !== session.hostId) {
-            // Host has changed - previous host likely disconnected
-            console.log('Host changed from', prevHostId, 'to', session.hostId)
-          }
-          prevHostId = session.hostId
-
-          // Check speaker presence
-          const activeSpeakerId = session.activeSpeakerId
-          let speakerDisconnected = false
-          
-          if (activeSpeakerId && session.presence) {
-            const speakerPresence = session.presence[activeSpeakerId]
-            speakerDisconnected = !speakerPresence || speakerPresence.status === 'offline'
-          }
-
-          setState({
-            session,
-            isLoading: false,
-            speakerDisconnected
-          })
-        } else {
+        if (!session) {
           setState({
             session: null,
             isLoading: false,
             error: 'Session not found',
             speakerDisconnected: false
           })
+          return
         }
+
+        if (prevHostId !== null && prevHostId !== session.hostId) {
+          console.log('Host changed from', prevHostId, 'to', session.hostId)
+        }
+        prevHostId = session.hostId
+
+        const activeSpeakerId = session.activeSpeakerId
+        let speakerDisconnected = false
+
+        if (activeSpeakerId && session.presence) {
+          const speakerPresence = session.presence[activeSpeakerId]
+          speakerDisconnected = !speakerPresence || speakerPresence.status === 'offline'
+        }
+
+        setState({
+          session,
+          isLoading: false,
+          speakerDisconnected
+        })
       },
       error => {
         if (!isCurrentSubscription) return
@@ -89,12 +92,11 @@ export function useSession(sessionId: string | null, userId: string | null = nul
       }
     )
 
-    // Cleanup listener on unmount or sessionId change
     return () => {
       isCurrentSubscription = false
       unsubscribe()
     }
-  }, [sessionId, userId])
+  }, [sessionId, sessionService])
 
   return state
 }

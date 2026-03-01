@@ -236,7 +236,8 @@ To minimize friction and speed up session creation/joining:
 Focus management for faster session start:
 
 * **First-time users** (no stored settings): Focus on Name input field
-* **Returning users** (stored settings exist): Focus on action button ("Create Session" or "Join")
+  * A stored name consisting only of whitespace is treated as absent — counts as first-time user; focus goes to Name input
+* **Returning users** (stored settings exist with a non-empty, non-whitespace name): Focus on action button ("Create Session" or "Join")
 * Allows keyboard-only workflow: pre-loaded settings + Enter key to proceed
 * Reduces clicks required to start/join meeting
 
@@ -312,6 +313,7 @@ Open Link → Enter Name → Wait in Lobby → Meeting Starts → Speak When Act
 | F31 | Timer warning state at 75% elapsed (25% remaining)           |
 | F32 | Timer critical state at 87.5% elapsed (12.5% remaining, min 5s) |
 | F33 | Sound notifications at warning, critical, and expired thresholds |
+| F34 | Participant name is trimmed of whitespace before write; empty or whitespace-only name is rejected with error "Participant name is required" |
 
 ---
 
@@ -344,17 +346,27 @@ Open Link → Enter Name → Wait in Lobby → Meeting Starts → Speak When Act
 * React useState
 * Firebase SDK
 * Tailwind CSS
+* Service layer (`lib/services/`) — typed interfaces over Firebase, localStorage, Audio, and time APIs (dependency-injection pattern)
+* Pure business logic module (`lib/sessionLogic.ts`) — zero Firebase dependencies, fully unit-testable
 
 ## Backend
 
 * Firebase Realtime Database
 * No custom backend server required
 * Real-time updates via Firebase WebSocket
+* All Firebase operations accessed exclusively through `SessionService`/`AuthService` interfaces — never called directly from components or hooks
 
 ## Hosting
 
 * Vercel (Frontend)
 * Firebase (Realtime Database & Authentication)
+
+## Testing
+
+* Vitest 4.x (test runner, jsdom environment)
+* @testing-library/react (hook and component tests)
+* jest-mock-extended (service mock factories)
+* Full plan: `docs/unit-tests-plan-v2.md`
 
 ---
 
@@ -366,12 +378,22 @@ Open Link → Enter Name → Wait in Lobby → Meeting Starts → Speak When Act
 Session {
   id: string
   hostId: string
+  createdAt: number                     // Unix timestamp (ms) — set once at creation
   slotDurationSeconds: number
-  participants: List<User>
+  participants: List<Participant>
   activeSpeakerId?: string
   spokenUserIds: List<string>
   status: Lobby | Active | Finished
-  slotEndsAt?: DateTime
+  slotEndsAt?: number                   // Unix timestamp (ms)
+  slotStartedAt?: number                // Unix timestamp (ms) when current speaker started
+  previousHostId?: string               // userId of previous host (set on host promotion)
+  hostChangedAt?: number                // Unix timestamp (ms) of last host promotion
+  presence?: {
+    [userId]: {
+      lastSeen: number                  // Unix timestamp (ms)
+      status: 'online' | 'offline'
+    }
+  }
 }
 ```
 
@@ -383,12 +405,12 @@ Participant {
   name: string
   role: 'host' | 'participant'
   isHandRaised: boolean
-  totalSpokeDurationSeconds: number     // Cumulative across the session
-  speakingHistory: [
+  totalSpokeDurationSeconds: number     // Cumulative across the session; initialized to 0 on join
+  speakingHistory: [                    // Initialized to [] on join
     {
-      startTime: number,                 // Unix timestamp (ms) when slot started
-      endTime?: number,                  // Unix timestamp (ms) when slot ended
-      durationSeconds: number            // Calculated duration of this speak
+      startTime: number,                // Unix timestamp (ms) when slot started
+      endTime?: number,                 // Unix timestamp (ms) when slot ended
+      durationSeconds: number           // Calculated duration of this speak
     }
   ]
 }
@@ -401,7 +423,7 @@ Participant {
 | Case                          | Handling                                          |
 | ----------------------------- | ------------------------------------------------- |
 | Active speaker disconnects    | Host selects next from unspoken participants      |
-| Host disconnects              | Promote first participant to host                 |
+| Host disconnects              | `promoteHostOnDisconnect` runs a Firebase transaction: promotes the alphabetically-first participant (by userId) whose presence status is not `'offline'`; records `previousHostId` and `hostChangedAt` on the session root |
 | Two users select next speaker | Server validates and rejects duplicate            |
 | Timer drift                   | Server authoritative `slotEndsAt`                 |
 | All participants have spoken  | Prevent next-speaker selection; host ends meeting |

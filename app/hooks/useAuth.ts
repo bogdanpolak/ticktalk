@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { signInAnonymously } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { authService as defaultAuthService, type AuthService } from '@/lib/services/authService'
 
 interface AuthState {
   userId: string | null
@@ -10,7 +9,12 @@ interface AuthState {
   error?: string
 }
 
-export function useAuth(): AuthState {
+interface UseAuthOptions {
+  authService?: AuthService
+}
+
+export function useAuth(options: UseAuthOptions = {}): AuthState {
+  const authService = options.authService ?? defaultAuthService
   const [state, setState] = useState<AuthState>({
     userId: null,
     isLoading: true,
@@ -22,22 +26,11 @@ export function useAuth(): AuthState {
 
     const authenticate = async () => {
       try {
-        // Check if user already authenticated
-        if (auth.currentUser) {
-          if (isMounted) {
-            setState({
-              userId: auth.currentUser.uid,
-              isLoading: false
-            })
-          }
-          return
-        }
+        const userId = await authService.getCurrentUserId()
 
-        // Sign in anonymously
-        const userCredential = await signInAnonymously(auth)
         if (isMounted) {
           setState({
-            userId: userCredential.user.uid,
+            userId,
             isLoading: false
           })
         }
@@ -57,7 +50,7 @@ export function useAuth(): AuthState {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [authService])
 
   return state
 }

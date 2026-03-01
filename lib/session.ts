@@ -1,415 +1,98 @@
-import { db } from './firebase';
-import { ref, push, set, update, get, runTransaction, onDisconnect as onDisconnectRef, serverTimestamp, DatabaseReference } from 'firebase/database';
+import { sessionService } from '@/lib/services/sessionService'
+import type {
+  CreateSessionInput,
+  Participant,
+  Session,
+  SessionService,
+  SessionStatus,
+  SessionSummary,
+  SpeakingHistoryEntry
+} from '@/lib/services/sessionService'
 
-// Types based on data model from plan
-export type SessionStatus = 'lobby' | 'active' | 'finished';
-
-export interface Participant {
-  name: string;
-  role: 'host' | 'participant';
-  isHandRaised: boolean;
-  totalSpokeDurationSeconds?: number;
-  speakingHistory?: SpeakingHistoryEntry[];
+export type {
+  CreateSessionInput,
+  Participant,
+  Session,
+  SessionService,
+  SessionStatus,
+  SessionSummary,
+  SpeakingHistoryEntry
 }
 
-export interface SpeakingHistoryEntry {
-  startTime: number;
-  endTime: number;
-  durationSeconds: number;
-}
-
-export interface Session {
-  hostId: string;
-  createdAt: number;
-  slotDurationSeconds: number;
-  status: SessionStatus;
-  activeSpeakerId: string | null | undefined;
-  slotEndsAt: number | null | undefined;
-  slotStartedAt?: number | null;
-  spokenUserIds: string[];
-  participants: {
-    [userId: string]: Participant;
-  };
-  presence?: {
-    [userId: string]: {
-      lastSeen: number;
-      status: 'online' | 'offline';
-    };
-  };
-  hostChangedAt?: number;
-  previousHostId?: string;
-}
-
-export interface SessionSummary {
-  sessionId: string;
-  hostId: string;
-  createdAt: number;
-}
-
-interface CreateSessionInput {
-  hostId: string;
-  hostName: string;
-  slotDurationSeconds: number;
-}
-
-/**
- * Create a new session
- * Returns the generated session ID
- */
 export async function createSession(input: CreateSessionInput): Promise<string> {
-  const sessionRef = push(ref(db, 'sessions'));
-  const sessionId = sessionRef.key;
-  
-  if (!sessionId) {
-    throw new Error('Failed to generate session ID');
-  }
-
-  const newSession: Session = {
-    hostId: input.hostId,
-    createdAt: Date.now(),
-    slotDurationSeconds: input.slotDurationSeconds,
-    status: 'lobby',
-    activeSpeakerId: null,
-    slotEndsAt: null,
-    slotStartedAt: null,
-    spokenUserIds: [],
-    participants: {
-      [input.hostId]: {
-        name: input.hostName,
-        role: 'host',
-        isHandRaised: false,
-        totalSpokeDurationSeconds: 0,
-        speakingHistory: []
-      }
-    }
-  };
-
-  await set(sessionRef, newSession);
-  return sessionId;
+  return sessionService.createSession(input)
 }
 
-/**
- * Add a participant to an existing session
- */
 export async function joinSession(
   sessionId: string,
   userId: string,
   userName: string
 ): Promise<void> {
-  const trimmedName = userName.trim();
-
-  if (!trimmedName) {
-    throw new Error('Participant name is required');
-  }
-
-  const participantRef = ref(db, `sessions/${sessionId}/participants/${userId}`);
-
-  try {
-    await set(participantRef, {
-      name: trimmedName,
-      role: 'participant',
-      isHandRaised: false,
-      totalSpokeDurationSeconds: 0,
-      speakingHistory: []
-    });
-  } catch (error) {
-    throw new Error(
-      `Failed to join session: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
-  }
+  return sessionService.joinSession(sessionId, userId, userName)
 }
 
-/**
- * List session summaries for lobby view (could be expanded with pagination/filtering in real app)
- */
 export async function listSessions(): Promise<SessionSummary[]> {
-  const sessionsRef = ref(db, 'sessions');
-  const snapshot = await get(sessionsRef);
-  
-  if (!snapshot.exists()) {
-    return [];
-  }
-  
-  const sessionsData = snapshot.val() as Record<string, Session>;
-  return Object.entries(sessionsData).map(([sessionId, session]) => ({
-    sessionId,
-    hostId: session.hostId,
-    createdAt: session.createdAt
-  }));
+  return sessionService.listSessions()
 }
 
-/**
- * Get session data
- */
 export async function getSession(sessionId: string): Promise<Session | null> {
-  const sessionRef = ref(db, `sessions/${sessionId}`);
-  const snapshot = await get(sessionRef);
-  
-  if (!snapshot.exists()) {
-    return null;
-  }
-  
-  const session = snapshot.val() as Session;
-  console.log('Fetched session data:', session);
-  return session;
+  return sessionService.getSession(sessionId)
 }
 
-/**
- * Update session fields
- */
 export async function updateSession(
   sessionId: string,
   updates: Partial<Session>
 ): Promise<void> {
-  const sessionRef = ref(db, `sessions/${sessionId}`);
-  await update(sessionRef, updates);
+  return sessionService.updateSession(sessionId, updates)
 }
 
-/**
- * Start the meeting (change status to active)
- */
 export async function startMeeting(sessionId: string): Promise<void> {
-  await updateSession(sessionId, { status: 'active' });
+  return sessionService.startMeeting(sessionId)
 }
 
-/**
- * End the meeting (change status to finished)
- */
 export async function endMeeting(sessionId: string): Promise<void> {
-  await updateSession(sessionId, {
-    status: 'finished',
-    activeSpeakerId: null,
-    slotEndsAt: null,
-    slotStartedAt: null
-  });
+  return sessionService.endMeeting(sessionId)
 }
 
-
-function endSlot(session: Session): void {
-    const activeSpeakerId = session.activeSpeakerId;
-    if (!activeSpeakerId) {
-      throw new Error('No active speaker to end');
-    }
-
-    const participant = session.participants?.[activeSpeakerId];
-    if (!participant) {
-      throw new Error('Active speaker participant not found');
-    }
-
-    const now = Date.now();
-    const slotStartedAt = session.slotStartedAt;
-
-    let durationSeconds = session.slotDurationSeconds;
-    if (typeof slotStartedAt === 'number') {
-      const durationMs = Math.max(0, now - slotStartedAt);
-      durationSeconds = Math.round(durationMs / 1000);
-    } else {
-      console.warn('slotStartedAt missing, using slotDurationSeconds fallback');
-    }
-
-    const speakingHistory = participant.speakingHistory ?? [];
-    const totalSpokeDurationSeconds = participant.totalSpokeDurationSeconds ?? 0;
-
-    const entry: SpeakingHistoryEntry = {
-      startTime: typeof slotStartedAt === 'number' ? slotStartedAt : now,
-      endTime: now,
-      durationSeconds
-    };
-
-    participant.speakingHistory = [...speakingHistory, entry];
-    participant.totalSpokeDurationSeconds = totalSpokeDurationSeconds + durationSeconds;
-
-    session.activeSpeakerId = null;
-    session.slotEndsAt = null;
-    session.slotStartedAt = null;
-}
-
-function switchToNextUser(session: Session, nextSpeakerId: string): void {
-    // Ensure data structures exist
-    const spokenUserIds = session.spokenUserIds || [];
-    const participants = session.participants || {};
-    
-    // Validate: nextSpeakerId exists as participant
-    if (!participants[nextSpeakerId]) {
-      throw new Error(
-        `Participant ${nextSpeakerId} not found in session`
-      );
-    }
-    
-    // Validation: speaker hasn't already spoken in the session (no reset allowed)
-    if (spokenUserIds.includes(nextSpeakerId)) {
-      throw new Error(
-        `Participant ${nextSpeakerId} has already spoken in this session`
-      );
-    }
-    
-    // Set new active speaker
-    const now = Date.now();
-    session.activeSpeakerId = nextSpeakerId;
-    session.slotStartedAt = now;
-    session.slotEndsAt = now + session.slotDurationSeconds * 1000;
-    
-    // Add to spoken list (no reset - single-turn session)
-    const updatedSpokenUserIds = [...spokenUserIds, nextSpeakerId];
-    session.spokenUserIds = updatedSpokenUserIds;
-}
-
-/**
- * Select the next speaker using a transaction to prevent race conditions
- * Tracks who has spoken and resets when all participants have had a turn
- */
 export async function selectNextSpeaker(
   sessionId: string,
   nextSpeakerId: string
 ): Promise<void> {
-  const sessionRef = ref(db, `sessions/${sessionId}`);
-  
-  await runTransaction(sessionRef, (session: Session | null) => {
-    if (!session) {
-      throw new Error('Session not found');
-    }
-    
-    if (session.activeSpeakerId) {
-      endSlot(session);
-    }
-    switchToNextUser(session, nextSpeakerId);
-    
-    return session;
-  });
+  return sessionService.selectNextSpeaker(sessionId, nextSpeakerId)
 }
 
-/**
- * End the last speaker's slot
- */
 export async function endLastSlot(sessionId: string): Promise<void> {
-  const sessionRef: DatabaseReference = ref(db, `sessions/${sessionId}`);
-
-  await runTransaction(sessionRef, (session: Session | null) => {
-    if (!session) {
-      throw new Error('Session not found');
-    }
-
-    endSlot(session);
-
-    return session;
-  });
+  return sessionService.endLastSlot(sessionId)
 }
 
-/**
- * Toggle hand raise status for a participant
- */
 export async function toggleHandRaise(
   sessionId: string,
   userId: string
 ): Promise<void> {
-  const participantRef = ref(db, `sessions/${sessionId}/participants/${userId}`);
-  
-  const snapshot = await get(participantRef);
-  const currentState = snapshot.val()?.isHandRaised ?? false;
-  
-  await update(participantRef, {
-    isHandRaised: !currentState
-  });
+  return sessionService.toggleHandRaise(sessionId, userId)
 }
 
-/**
- * Remove a participant from a session
- */
 export async function removeParticipant(
   sessionId: string,
   userId: string
 ): Promise<void> {
-  const participantRef = ref(db, `sessions/${sessionId}/participants/${userId}`);
-  await set(participantRef, null);
+  return sessionService.removeParticipant(sessionId, userId)
 }
 
-/**
- * Promote a participant to host role (for host disconnect scenarios)
- */
 export async function promoteToHost(
   sessionId: string,
   userId: string
 ): Promise<void> {
-  const participantRef = ref(db, `sessions/${sessionId}/participants/${userId}`);
-  await update(participantRef, {
-    role: 'host'
-  });
-  
-  // Update session hostId
-  await updateSession(sessionId, { hostId: userId });
+  return sessionService.promoteToHost(sessionId, userId)
 }
 
-/**
- * Monitor presence and set up disconnect cleanup
- * Returns an unsubscribe function
- */
-export function monitorPresence(
-  sessionId: string,
-  userId: string
-): () => void {
-  const presenceRef = ref(db, `sessions/${sessionId}/presence/${userId}`);
-  
-  // Set presence on connect
-  set(presenceRef, {
-    lastSeen: serverTimestamp(),
-    status: 'online'
-  });
-  
-  // On disconnect, remove presence
-  onDisconnectRef(presenceRef).remove();
-  
-  // Return cleanup function
-  return () => {
-    // Remove presence on manual cleanup
-    set(presenceRef, null);
-  };
+export function monitorPresence(sessionId: string, userId: string): () => void {
+  return sessionService.monitorPresence(sessionId, userId)
 }
 
-/**
- * Promote host automatically when current host disconnects
- * Call this when host presence is lost
- */
 export async function promoteHostOnDisconnect(
   sessionId: string,
   currentHostId: string
 ): Promise<void> {
-  const sessionRef = ref(db, `sessions/${sessionId}`);
-  
-  await runTransaction(sessionRef, (session: Session | null) => {
-    if (!session) {
-      return undefined;
-    }
-    
-    // Verify host is still the one we think disconnected
-    if (session.hostId !== currentHostId) {
-      // Host already changed, do nothing
-      return session;
-    }
-    
-    const participants = session.participants || {};
-    
-    // Find first non-host participant (deterministic order)
-    const candidateIds = Object.keys(participants)
-      .filter(id => id !== currentHostId)
-      .sort(); // Alphabetical order for determinism
-    
-    if (candidateIds.length === 0) {
-      // No other participants, keep current host
-      return session;
-    }
-    
-    const newHostId = candidateIds[0];
-    
-    // Update participant role
-    if (session.participants[newHostId]) {
-      session.participants[newHostId].role = 'host';
-    }
-    session.hostId = newHostId;
-    
-    // Add log entry for debugging
-    session.hostChangedAt = Date.now();
-    session.previousHostId = currentHostId;
-    
-    return session;
-  });
+  return sessionService.promoteHostOnDisconnect(sessionId, currentHostId)
 }
