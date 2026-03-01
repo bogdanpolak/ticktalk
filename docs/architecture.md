@@ -91,11 +91,33 @@ sessions/{sessionId}: {
 
 ## 3. Page Structure
 
+All application source lives under `src/`. The `app/` directory follows Next.js App Router conventions and contains only routing files (`page.tsx`, `layout.tsx`) and colocated `_components/` private folders. View logic is extracted from `page.tsx` files into those subfolders, keeping pages thin.
+
 ```
-app/
-  page.tsx                      → Home / Create Session
-  join/[sessionId]/page.tsx     → Join session (enter name)
-  meeting/[sessionId]/page.tsx  → Lobby + Meeting Room
+src/
+  app/
+    _components/
+      HomeForm.tsx              → Full home page UI and logic
+      join/
+        JoinView.tsx            → Full join page UI and logic
+      meeting
+        LoadingView.tsx         → Loading spinner
+        ErrorView.tsx           → Error state with back link
+        LobbyView.tsx           → Pre-meeting waiting room
+        ActiveMeetingView.tsx   → Active meeting UI
+        FinishedView.tsx        → Post-meeting summary/ended state
+    join/[sessionId]/
+      page.tsx                  → Resolves sessionId param, renders <JoinView>
+    meeting/[sessionId]/
+      page.tsx                  → Status router → delegates to view component
+    globals.css
+    layout.tsx
+    page.tsx                    → Renders <HomeForm /> (≤ 10 lines)
+  components/                   → Shared reusable UI components
+  hooks/                        → React hooks (moved from app/hooks/)
+  lib/                          → Firebase, services, business logic
+  utils.tsx                     → Shared utilities (moved from app/utils.tsx)
+tests/                          → Test files (root-level; @/* alias → src/)
 ```
 
 ### 3.1 Home Page (`/`)
@@ -501,7 +523,7 @@ useEffect(() => {
 ## 7. Component Breakdown
 
 ```
-components/
+src/components/
   Timer.tsx                → Countdown + over-time display with color states
   ParticipantList.tsx      → List with status + total time badge; sorted: active speaker first, then hand-raised (alpha), then others (alpha)
   SpeakerSelector.tsx      → Pick next speaker from eligible list; accepts optional sessionService for DI
@@ -509,9 +531,8 @@ components/
   MeetingControls.tsx      → Host/speaker action buttons; accepts optional sessionService for DI
   MeetingSummary.tsx       → Finished state view with speaking times + overtime indicator
   EndMeetingDialog.tsx     → Confirmation modal for unspoken participants warning
-  LobbyView.tsx            → Pre-meeting waiting room
 
-lib/
+src/lib/
   firebase.ts              → Firebase app initialization
   session.ts               → Facade — re-exports types, delegates to lib/services/sessionService
   sessionLogic.ts          → Pure logic functions (no Firebase): moveToNextSpeaker, computeRemainingSeconds,
@@ -533,12 +554,14 @@ lib/
     setup.ts               → Global Vitest setup (fake timers, localStorage mock, Audio mock)
     mocks.ts               → Shared mock factories for services, session data, and browser APIs
 
-hooks/ (app/hooks/)
+src/hooks/
   useSession.ts            → Subscribe to session updates via sessionService.subscribeSession();
                              accepts optional { sessionService } for testability
   useTimer.ts              → Local countdown/over-time logic; accepts optional { audioService, timeService }
   useAuth.ts               → Current user identity; accepts optional { authService }
   useLocalStorage.ts       → Hook for loading/saving settings with focus management
+
+src/utils.tsx              → Shared utility functions (calculateAgo, formatDuration)
 ```
 
 ---
@@ -581,7 +604,9 @@ hooks/ (app/hooks/)
 
 See [docs/tasks.md](tasks.md) for the complete task list with tracking and status updates.
 
-All 38 tasks (REQ-0001 through REQ-0038) must be completed to achieve a production-ready MVP.
+All 39 tasks (REQ-0001 through REQ-0039) must be completed to achieve a production-ready MVP.
+
+REQ-0039 (completed) covers the `src/` folder restructure and minimal `page.tsx` pattern — see [docs/stories/completed/REQ-0039-src-folder-restructure.md](stories/completed/REQ-0039-src-folder-restructure.md).
 
 Unit test implementation is tracked separately in [docs/unit-tests-plan-v2.md](unit-tests-plan-v2.md). Commits `9ce4d1b` through `5b0d188` implement Phase 1 (service abstractions + pure logic extraction) and Tiers 1–3 of the test suite.
 
@@ -613,7 +638,7 @@ Unit test implementation is tracked separately in [docs/unit-tests-plan-v2.md](u
 
 ## 13. Success Criteria
 
-At MVP completion (all 38 tasks marked ✅):
+At MVP completion (all 39 tasks marked ✅):
 
 - All core features functional (create, join, speak, timer with over-time, end meeting with warnings)
 - Custom duration selector with 10 options + custom input (30-3600s)

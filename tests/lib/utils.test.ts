@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { calculateAgo, formatDuration } from '@/app/utils'
+import { calculateAgo, formatDuration } from '@/utils'
 
 describe('app/utils formatDuration', () => {
   it('formats expected values', () => {

@@ -4,13 +4,13 @@ import path from 'node:path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '.'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./lib/__tests__/setup.ts'],
+    setupFiles: ['./src/lib/__tests__/setup.ts'],
     passWithNoTests: true,
     coverage: {
       provider: 'v8',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTimer } from '@/app/hooks/useTimer'
+import { useTimer } from '@/hooks/useTimer'
 
 type TimerState = 'idle' | 'normal' | 'warning' | 'critical' | 'expired' | 'overtime'
 

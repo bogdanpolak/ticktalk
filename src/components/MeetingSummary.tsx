@@ -1,5 +1,5 @@
 import type { Session } from '@/lib/session'
-import { formatDuration } from '@/app/utils'
+import { formatDuration } from '@/utils'
 
 interface MeetingSummaryRow {
   userId: string

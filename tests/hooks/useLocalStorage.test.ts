@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { useLocalStorage } from '@/app/hooks/useLocalStorage'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 
 const STORAGE_KEYS = {
   userName: 'ticktalk_userName',

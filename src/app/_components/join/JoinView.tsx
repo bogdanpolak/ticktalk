@@ -3,20 +3,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
-import { useAuth } from '@/app/hooks/useAuth'
-import { useLocalStorage } from '@/app/hooks/useLocalStorage'
-import { useSession } from '@/app/hooks/useSession'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { useSession } from '@/hooks/useSession'
 import { joinSession } from '@/lib/session'
 import { saveSettings } from '@/lib/storage'
 
 const FIXED_DURATION_VALUES = new Set([60, 75, 90, 105, 120, 135, 150, 165, 180])
 
-export default function JoinPage() {
+export function JoinView({ sessionId }: { sessionId: string }) {
   const router = useRouter()
-  const params = useParams()
-  const sessionIdParam = params.sessionId
-  const sessionId = Array.isArray(sessionIdParam) ? sessionIdParam[0] : sessionIdParam
 
   const { userId, isLoading: authLoading } = useAuth()
   const { settings, hasStoredName, isReady } = useLocalStorage()

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createSession, listSessions } from "@/lib/session";
 import { SessionSummary } from "@/lib/session";
-import { calculateAgo } from "./utils";
+import { calculateAgo } from "@/utils";
 
 type SessionView = SessionSummary & { ago: string };
 

@@ -1,4 +1,4 @@
-import { formatDuration } from '@/app/utils'
+import { formatDuration } from '@/utils'
 import type { Participant } from '@/lib/session'
 
 interface ParticipantRow {

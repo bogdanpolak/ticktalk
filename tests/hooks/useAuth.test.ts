@@ -9,7 +9,7 @@ vi.mock('@/lib/services/authService', () => ({
   }
 }))
 
-import { useAuth } from '@/app/hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 type AuthService = {
   getCurrentUser: () => unknown

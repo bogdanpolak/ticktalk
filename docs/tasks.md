@@ -42,6 +42,7 @@
 | REQ-0036 | Hide MeetingControls for non-active participants | ✅ |
 | REQ-0037 | Percentage-based timer warning/critical thresholds | ✅ |
 | REQ-0038 | Sound notifications for warning/critical states | ⬜ |
+| REQ-0039 | Project restructure — `src/` folder layout with minimal pages | ✅ |
 
 **Status Symbols**
 
@@ -225,3 +226,19 @@ After MVP completion consider implementation following tasks/requirements:
 - Keep overtime indicator in Meeting Summary only
 - Remove red highlight styling for overtime rows
 - Keep total time display unchanged
+
+---
+
+## Summary of New Requirements (REQ-0039)
+
+### REQ-0039: Project Restructure — `src/` Folder Layout with Minimal Pages
+- Move all application source (`app/`, `components/`, `lib/`) into `src/`
+- Promote `app/hooks/` to `src/hooks/` and `app/utils.tsx` to `src/utils.tsx`
+- Update `tsconfig.json` `@/*` alias from `"./*"` to `"./src/*"`
+- Update `vitest.config.mts` alias and `setupFiles` accordingly
+- Extract all view/UI logic from `page.tsx` files into `_components/` subfolders:
+  - `src/app/_components/HomeForm.tsx` (home page form)
+  - `src/app/join/[sessionId]/_components/JoinView.tsx`
+  - `src/app/meeting/[sessionId]/_components/` (LoadingView, ErrorView, LobbyView, ActiveMeetingView, FinishedView)
+- Each `page.tsx` becomes a thin router (≤ 35 lines) with no inline UI
+- `tests/` stays at project root; only import paths updated

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { useTimer } from '@/app/hooks/useTimer'
+import { useTimer } from '@/hooks/useTimer'
 import { createMockAudioService } from '@/lib/__tests__/mocks'
 import type { TimeService } from '@/lib/services/timeService'
 

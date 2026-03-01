@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/app/hooks/useAuth'
-import { useLocalStorage } from '@/app/hooks/useLocalStorage'
+import { useAuth } from '@/hooks/useAuth'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { createSession } from '@/lib/session'
 import { saveSettings } from '@/lib/storage'
 
@@ -20,7 +20,7 @@ const DURATION_OPTIONS: { label: string; value: number | 'custom' }[] = [
   { label: 'Custom...', value: 'custom' }
 ]
 
-export default function HomePage() {
+export function HomeForm() {
   const router = useRouter()
   const { userId, isLoading: authLoading } = useAuth()
   const { settings, hasStoredName, isReady } = useLocalStorage()
