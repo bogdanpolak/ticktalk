@@ -24,7 +24,7 @@ This folder contains **5 key files** that define the product, architecture, and 
 
 ---
 
-### 2. **plan.md** (Implementation Plan)
+### 2. **architecture.md** (Implementation Architecture)
 - **What**: Technical architecture and implementation strategy
 - **Who**: Developers, architects, AI agents
 - **Contains**:
@@ -101,7 +101,7 @@ This folder contains **5 key files** that define the product, architecture, and 
    - What features are required
    - Success criteria
 
-2. **Read [plan.md](plan.md)** to understand:
+2. **Read [architecute.md](architecute.md)** to understand:
    - Technical architecture decisions
    - Data model and Firebase structure
    - Implementation approach
@@ -225,7 +225,7 @@ All combinations meet WCAG AA 4.5:1 contrast minimum.
 If an AI agent is missing information:
 
 **For Product/Requirements**: Check [PRD.md](PRD.md)  
-**For Architecture/Implementation**: Check [plan.md](plan.md)  
+**For Architecture/Implementation**: Check [architecute.md](architecute.md)  
 **For Task Status**: Check [tasks.md](tasks.md)  
 **For Design Tokens/Components**: Check [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) section 8 (components) or 12 (tokens)  
 **For Quick Component Reference**: Check [AI_COMPONENT_GENERATOR_GUIDE.md](AI_COMPONENT_GENERATOR_GUIDE.md)  
@@ -237,7 +237,7 @@ If an AI agent is missing information:
 ## 📂 Recommended Reading Order
 
 1. **PRD.md** → Understand the product
-2. **plan.md** → Understand the architecture
+2. **architecute.md** → Understand the architecture
 3. **tasks.md** → See current progress
 4. **DESIGN_SYSTEM.md** → Learn the design tokens
 5. **AI_COMPONENT_GENERATOR_GUIDE.md** → Generate components

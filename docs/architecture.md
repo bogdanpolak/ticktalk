@@ -1,6 +1,6 @@
-# Tick-Talk — Implementation Plan
+# Tick-Talk — Implementation Architecture
 
-> Updated: March 2026
+> Updated: 1 March 2026
 > Based on PRD + tech architecture decisions
 
 ---
