@@ -1,4 +1,115 @@
-# Plan: Unit Tests with Refactored Abstractions
+# Prompt
+
+References: #file:PRD.md, #file:plan.md and #file:unit-tests-plan-v2.md
+Your job is to analyze changes in current project and update documentation files: PRD.md and plan.md
+
+delegate tasks to subagents. Each subagent can work in parallel and should return list of updates in docs. When all subagent complete the main agent (supervisor) should collect all information, systemize changes and apply them to documentation.
+
+Instruct subagent to:
+
+1. read PRD and plan.
+2. read refactoring and unit test plan: unit-tests-plan-v2.md
+3. provide commit commit hash to analyze. Focus on how changes affect the product requirements and architecture.
+4. return list of updates needed in PRD and plan based on the analysis of the commit.
+
+For each commit run subagents in parallel (commits listed in descending order, latest first):
+
+1. `5b0d188` test(session-service): add tier 3 business logic unit tests
+2. `b197640` test(hooks): add medium tier tests for useAuth
+3. `ab5caf1` test(hooks): add easy tier hook tests for local storage and timer
+4. `cb71cef` test: add Tier 1 utility tests and stabilize vitest jsdom
+5. `ea3cff7` test: add vitest global setup and shared mock factories
+6. `8fc9a2b` Phase 2, Step 2: Create Vitest Configuration
+7. `9ce4d1b` 2.1. Install Dependencies - unit tests
+8. `96a9f8f` refactor: allow service injection in meeting components
+9. `7beae83` refactor: inject services into auth session timer hooks
+10. `1e77afc` refactor: add browser api service layer
+11. `cf462bc` refactor: extract pure session logic module
+12. `541b91a` refactor: add firebase service abstractions
+
+
+# Results
+
+- Model: `Claude Sonnet 4.6` (1x)
+- Used Premium tokent: `1`
+- Context Window: `81.4K` / `128K` tokens • used: `64%`
+- Partition:
+    - System Instructions: `3.8%`
+    - Tool Definitions: `12.1%`
+    - User Context - Messages: `18.5%`
+    - User Context - Files: `10.8%`
+    - Tool Results: `17.8%`
+    - Uncategorized - Other: `0.6%`
+- 12 subagents completed in parallel, total time: ~ 5 minutes
+
+
+# Historical Gaps Detected
+
+Changes that were made before refactoring, but not reflected in documentation:
+
+## 1. Data Model — Missing Session Fields
+
+Both `PRD.md §10` and `plan.md §2` were missing fields that exist in the real Firebase schema (confirmed by `sessionService.ts` `Session` interface and unit tests).
+
+| Field | Type | Notes |
+|---|---|---|
+| `createdAt` | `number` | Unix timestamp (ms) — set once at session creation |
+| `slotStartedAt` | `number \| null` | Unix timestamp (ms) when current speaker started — was in `plan.md` but missing from `PRD.md §10` |
+| `presence` | `{ [userId]: { lastSeen: number, status: 'online' \| 'offline' } }` | Online/offline tracking; entirely absent from both docs |
+| `previousHostId` | `string \| null` | userId of previous host — set on host promotion |
+| `hostChangedAt` | `number \| null` | Unix timestamp (ms) of last host promotion |
+
+
+## 2. Participant Initialization Defaults
+
+`joinSession` always writes `totalSpokeDurationSeconds: 0` and `speakingHistory: []` at join time. The old docs implied these fields only appeared after speaking.
+
+## 3. End Slot Uses `runTransaction`, Not Two `update()` Calls
+
+The old `plan.md §4.5` showed two separate `update()` calls for ending a slot. The actual implementation (`endLastSlot` in `sessionService.ts`) uses a single `runTransaction` to atomically update participant history and clear `activeSpeakerId`/`slotStartedAt`/`slotEndsAt`.
+
+
+## 4. Presence Tracking & Host Promotion (Entirely Missing)
+
+A complete section was absent from both documents. Three functions are now documented:
+
+-`monitorPresence(sessionId, userId)`
+    - Writes `{ lastSeen: serverTimestamp(), status: 'online' }` to `sessions/{sessionId}/presence/{userId}`
+    - Registers `onDisconnect().remove()` on the same ref — node deleted automatically on disconnect
+- `promoteHostOnDisconnect(sessionId, currentHostId)`
+    - Runs a `runTransaction` on the session root
+    - Aborts (no-op) if `session.hostId !== currentHostId` or `shouldPromoteNewHost` returns false
+    - Picks candidate: alphabetically-first `userId` (excluding `currentHostId`) among participants via `.sort()`
+    - Writes: `session.hostId`, `session.participants[newHostId].role = 'host'`, `session.previousHostId`, `session.hostChangedAt`
+- `shouldPromoteNewHost(session)` — pure function in `lib/sessionLogic.ts`
+    - Returns `true` when host entry is absent from `participants`, or when `presence[hostId].status === 'offline'`
+    - Returns `false` when no other participants exist as promotion candidates
+
+## 5. Whitespace Name = First-Time User
+
+The focus management condition was `if (settings.userName)` — truthy for `"   "` (whitespace-only strings). Unit tests for `useLocalStorage` prove the correct behavior requires `.trim()`.
+
+## 6. Participant List Sort Order
+
+- `buildParticipantRows` sort contract (pure function in `lib/sessionLogic.ts`) was entirely undocumented. Sort priority (descending):
+    - 1. Active speaker — always first
+    - 2. Hand-raised participants — alphabetical by name within group
+    - 3. All remaining participants — alphabetical by name within group
+    - Note: `hasSpoken` status does **not** influence sort position.
+
+## 7. `validateSessionTransition` Contract
+
+- Pure function in `lib/sessionLogic.ts` with two enforced invariants — undocumented before:
+    - Rejects any `status` downgrade (e.g., `active` → `lobby`)
+    - Rejects `status: 'finished'` when `activeSpeakerId` is non-null
+
+
+
+
+
+
+
+# Plan
 
 **TL;DR**: Create service layer abstractions to decouple Firebase/browser APIs from business logic → establish test infrastructure (Vitest + mocks) → systematically write tests in 4 tiers (utilities → hooks → business logic → components). This results in fast, maintainable unit tests with minimal coupling. Estimated refactor effort: 4-6 hours; test writing: 8-12 hours.
 
