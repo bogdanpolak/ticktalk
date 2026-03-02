@@ -450,4 +450,220 @@ describe('sessionService', () => {
       expect(transactionResult).toEqual(sessionBefore)
     })
   })
+
+  describe('listSessions', () => {
+    it('returns summaries when sessions exist', async () => {
+      const sessionsData = {
+        'session-1': {
+          hostId: 'host-1',
+          createdAt: FIXED_NOW - 10_000,
+          slotDurationSeconds: 60,
+          status: 'lobby',
+          activeSpeakerId: null,
+          slotEndsAt: null,
+          spokenUserIds: [],
+          participants: {}
+        },
+        'session-2': {
+          hostId: 'host-2',
+          createdAt: FIXED_NOW,
+          slotDurationSeconds: 120,
+          status: 'active',
+          activeSpeakerId: null,
+          slotEndsAt: null,
+          spokenUserIds: [],
+          participants: {}
+        }
+      }
+
+      firebaseDatabaseMocks.get.mockResolvedValueOnce(snapshotOf(sessionsData))
+
+      const result = await sessionService.listSessions()
+
+      expect(result).toEqual([
+        { sessionId: 'session-1', hostId: 'host-1', createdAt: FIXED_NOW - 10_000 },
+        { sessionId: 'session-2', hostId: 'host-2', createdAt: FIXED_NOW }
+      ])
+      expect(firebaseDatabaseMocks.ref).toHaveBeenCalledWith(mockDb, 'sessions')
+    })
+
+    it('returns empty array when no sessions', async () => {
+      const result = await sessionService.listSessions()
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('getSession', () => {
+    it('returns session data when found', async () => {
+      const sessionData: Session = {
+        hostId: 'host-1',
+        createdAt: FIXED_NOW,
+        slotDurationSeconds: 60,
+        status: 'lobby',
+        activeSpeakerId: null,
+        slotEndsAt: null,
+        slotStartedAt: null,
+        spokenUserIds: [],
+        participants: {
+          'host-1': {
+            name: 'Host',
+            role: 'host',
+            isHandRaised: false,
+            totalSpokeDurationSeconds: 0,
+            speakingHistory: []
+          }
+        }
+      }
+
+      firebaseDatabaseMocks.get.mockResolvedValueOnce(snapshotOf(sessionData))
+
+      const result = await sessionService.getSession('session-1')
+
+      expect(result).toEqual(sessionData)
+      expect(firebaseDatabaseMocks.ref).toHaveBeenCalledWith(mockDb, 'sessions/session-1')
+    })
+
+    it('returns null when session not found', async () => {
+      const result = await sessionService.getSession('nonexistent')
+
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('updateSession', () => {
+    it('calls Firebase update with correct ref and data', async () => {
+      await sessionService.updateSession('session-1', { status: 'active' })
+
+      expect(firebaseDatabaseMocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'sessions/session-1' }),
+        { status: 'active' }
+      )
+    })
+  })
+
+  describe('startMeeting', () => {
+    it('sets status to active via updateSession', async () => {
+      await sessionService.startMeeting('session-1')
+
+      expect(firebaseDatabaseMocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'sessions/session-1' }),
+        { status: 'active' }
+      )
+    })
+  })
+
+  describe('removeParticipant', () => {
+    it('sets participant reference to null', async () => {
+      await sessionService.removeParticipant('session-1', 'user-1')
+
+      expect(firebaseDatabaseMocks.set).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'sessions/session-1/participants/user-1' }),
+        null
+      )
+    })
+  })
+
+  describe('promoteToHost', () => {
+    it('updates participant role and session hostId', async () => {
+      await sessionService.promoteToHost('session-1', 'user-2')
+
+      expect(firebaseDatabaseMocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'sessions/session-1/participants/user-2' }),
+        { role: 'host' }
+      )
+      expect(firebaseDatabaseMocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'sessions/session-1' }),
+        { hostId: 'user-2' }
+      )
+    })
+  })
+
+  describe('subscribeSession', () => {
+    it('calls onValue and returns unsubscribe function', () => {
+      const unsubscribeFn = vi.fn()
+      firebaseDatabaseMocks.onValue.mockReturnValueOnce(unsubscribeFn)
+
+      const onData = vi.fn()
+      const onError = vi.fn()
+      const result = sessionService.subscribeSession('session-1', onData, onError)
+
+      expect(firebaseDatabaseMocks.onValue).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'sessions/session-1' }),
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(result).toBe(unsubscribeFn)
+    })
+
+    it('calls onData(null) when session does not exist', () => {
+      firebaseDatabaseMocks.onValue.mockImplementationOnce(
+        (
+          _ref: unknown,
+          callback: (snapshot: SnapshotLike) => void
+        ) => {
+          callback(snapshotOf(null))
+          return vi.fn()
+        }
+      )
+
+      const onData = vi.fn()
+      sessionService.subscribeSession('session-1', onData)
+
+      expect(onData).toHaveBeenCalledWith(null)
+    })
+  })
+
+  describe('createSession - edge cases', () => {
+    it('throws when push returns null key', async () => {
+      firebaseDatabaseMocks.push.mockReturnValueOnce({
+        database: mockDb,
+        path: 'sessions',
+        key: null
+      })
+
+      await expect(
+        sessionService.createSession({
+          hostId: 'host-1',
+          hostName: 'Host User',
+          slotDurationSeconds: 60
+        })
+      ).rejects.toThrow('Failed to generate session ID')
+    })
+  })
+
+  describe('endLastSlot - edge cases', () => {
+    it('throws when no active speaker', async () => {
+      const sessionWithNoSpeaker: Session = {
+        hostId: 'host-1',
+        createdAt: FIXED_NOW,
+        slotDurationSeconds: 60,
+        status: 'active',
+        activeSpeakerId: null,
+        slotStartedAt: null,
+        slotEndsAt: null,
+        spokenUserIds: [],
+        participants: {
+          'host-1': {
+            name: 'Host',
+            role: 'host',
+            isHandRaised: false,
+            totalSpokeDurationSeconds: 0,
+            speakingHistory: []
+          }
+        }
+      }
+
+      firebaseDatabaseMocks.runTransaction.mockImplementationOnce(
+        async (_reference: unknown, updater: (value: unknown) => unknown) => {
+          updater(sessionWithNoSpeaker)
+          return { committed: true }
+        }
+      )
+
+      await expect(sessionService.endLastSlot('session-1')).rejects.toThrow(
+        'No active speaker to end'
+      )
+    })
+  })
 })
