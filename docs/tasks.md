@@ -45,7 +45,7 @@
 | REQ-0039 | Project restructure — `src/` folder layout with minimal pages | ✅ |
 | REQ-0040 | Unit tests: sessionService additional coverage | ✅ |
 | REQ-0041 | Unit tests: useSession hook | ✅ |
-| REQ-0042 | Unit tests: presentation components | 🟨 |
+| REQ-0042 | Unit tests: presentation components | ✅ |
 | REQ-0043 | Unit tests: integrated components | 🟨 |
 
 **Status Symbols**
