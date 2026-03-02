@@ -1,7 +1,6 @@
 ---
 name: run-full-workflow
 description: Implement a Tick-Talk project requirement based on its specification file.
-tools: ['agent', 'search', 'search/codebase', 'search/fileSearch', 'search/searchSubagent', 'search/listDirectory', 'search/textSearch', 'read', 'edit/createFile', 'edit/editFiles', 'execute/getTerminalOutput', 'execute/testFailure', 'web', 'gitkraken/git_status', 'gitkraken/git_log_or_diff', 'vscode/askQuestions']
 ---
 
 # References
